@@ -14,7 +14,7 @@ class CitizenDashboardScreen extends StatefulWidget {
 }
 
 class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
-  // Get current user to filter complaints
+
   final User? currentUser = FirebaseAuth.instance.currentUser;
 
   @override
@@ -23,6 +23,15 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
       appBar: AppBar(
         title: const Text('My Complaints'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: ComplaintSearchDelegate(),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {

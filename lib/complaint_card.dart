@@ -38,6 +38,7 @@ class ComplaintCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+
                 Text(
                   DateFormat('MMM d, yyyy').format(complaint.date), // Requires intl package
                   // OR use simple text if you don't have intl:

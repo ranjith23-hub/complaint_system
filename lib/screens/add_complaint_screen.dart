@@ -1,6 +1,73 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
+
+
+class ComplaintSearchDelegate extends SearchDelegate {
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ""),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    // This triggers when the user hits "Enter"
+    return _buildSearchResults(query);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    // This triggers while the user is typing
+    if (query.isEmpty) return const Center(child: Text("Search by ID (e.g., COM-123...)"));
+    return _buildSearchResults(query);
+  }
+
+  // --- Helper to query Firestore ---
+  Widget _buildSearchResults(String searchText) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('complaints')
+          .where('complaintId', isGreaterThanOrEqualTo: searchText.trim().toUpperCase())
+          .where('complaintId', isLessThanOrEqualTo: searchText.trim().toUpperCase() + '\uf8ff')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+        var docs = snapshot.data!.docs;
+        if (docs.isEmpty) return const Center(child: Text("No complaints found."));
+
+        return ListView.builder(
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            var data = docs[index].data() as Map<String, dynamic>;
+            return ListTile(
+              title: Text(data['complaintId']),
+              subtitle: Text(data['title']),
+              onTap: () {
+                // Navigate to the detail page we built earlier
+                // close(context, null); // Close search
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 class AddComplaintScreen extends StatefulWidget {
   const AddComplaintScreen({super.key});
@@ -11,40 +78,81 @@ class AddComplaintScreen extends StatefulWidget {
 
 class _AddComplaintScreenState extends State<AddComplaintScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
-  bool _isSubmitting = false;
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
 
+  File? _image;
+  Position? _currentPosition;
+  bool _isSubmitting = false;
+  bool _isLocating = false;
+
+  // --- Logic: Pick Image ---
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile != null) {
+      setState(() => _image = File(pickedFile.path));
+    }
+  }
+
+  // --- Logic: Get Location ---
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLocating = true);
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() => _currentPosition = position);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Location Error: $e")));
+    } finally {
+      setState(() => _isLocating = false);
+    }
+  }
+
+  // --- Logic: Submit to Firebase ---
   Future<void> _submitComplaint() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isSubmitting = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
+      String? imageUrl;
 
-      // Write to Firestore
-      await FirebaseFirestore.instance.collection('complaints').add({
+      // 1. Upload Image to Firebase Storage if exists
+     /* if (_image != null) {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('complaint_images')
+            .child('${DateTime.now().toIso8601String()}.jpg');
+        await ref.putFile(_image!);
+        imageUrl = await ref.getDownloadURL();
+      }*/
+
+      // 2. Generate your Custom ID (as we discussed)
+      // Example: COM-1734963000-USERUID123
+      String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}";
+
+      // 3. Save to Firestore
+      await FirebaseFirestore.instance.collection('complaints').doc(customId).set({
+        'complaintId': customId,
         'title': _titleController.text.trim(),
         'description': _descController.text.trim(),
-        'userId': user?.uid,       // Important for filtering later
-        'userEmail': user?.email,
+        'userId': user?.uid,
+        'imageUrl': imageUrl, // Store the URL link
+        'latitude': _currentPosition?.latitude,
+        'longitude': _currentPosition?.longitude,
         'status': 'Pending',
-        'createdAt': FieldValue.serverTimestamp(), // Server-side time
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Complaint submitted successfully!')),
-        );
-        Navigator.pop(context); // Go back to Dashboard
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Submitted!')));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -54,40 +162,56 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('New Complaint')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Complaint Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val!.isEmpty ? 'Title is required' : null,
+                decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 4,
-                validator: (val) => val!.isEmpty ? 'Description is required' : null,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitComplaint,
-                  child: _isSubmitting
-                      ? const CircularProgressIndicator()
-                      : const Text('Submit'),
-                ),
+
+              const SizedBox(height: 20),
+              // Image Preview
+              _image != null
+                  ? Image.file(_image!, height: 150)
+                  : const Text("No Image Selected"),
+              TextButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.camera),
+                  label: const Text("Add Photo")
+              ),
+
+              const Divider(),
+              // Location Preview
+              _isLocating
+                  ? const CircularProgressIndicator()
+                  : Text(_currentPosition == null
+                  ? "Location not attached"
+                  : "Lat: ${_currentPosition!.latitude.toStringAsFixed(3)}"),
+              TextButton.icon(
+                  onPressed: _getCurrentLocation,
+                  icon: const Icon(Icons.location_on),
+                  label: const Text("Get Location")
+              ),
+
+              const SizedBox(height: 30),
+              _isSubmitting
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                  onPressed: _submitComplaint,
+                  child: const Text("SUBMIT")
               ),
             ],
           ),
