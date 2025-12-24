@@ -78,6 +78,23 @@ class ComplaintDetailsPage extends StatelessWidget {
               "Lat: ${complaint.latitude?.toStringAsFixed(1) ?? '0.0'}, Lon: ${complaint.longitude?.toStringAsFixed(1) ?? '0.0'}",
               icon: Icons.location_on,
             ),
+            // Inside your build method or a section box
+            if (complaint.imageUrl != null && complaint.imageUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(
+                  complaint.imageUrl!,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.broken_image, size: 50),
+                ),
+              ),
           ],
         ),
       ),

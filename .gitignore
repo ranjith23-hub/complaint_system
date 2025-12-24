@@ -1,6 +1,8 @@
 firebase.json
 google-services.json
 firebase_options.dart
+Application.dart
+
 .env
 *.key
 *.pem

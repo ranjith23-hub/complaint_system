@@ -6,9 +6,224 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:complaint_system/screens/complaint_detail_screen.dart';
 import 'package:complaint_system/models/complaint_model.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:complaint_system/models/Application.dart';
 //import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:complaint_system/models/complaint_model.dart';
+import 'package:complaint_system/screens/complaint_detail_screen.dart';
 
+class AddComplaintScreen extends StatefulWidget {
+  const AddComplaintScreen({super.key});
+
+  @override
+  State<AddComplaintScreen> createState() => _AddComplaintScreenState();
+}
+
+class _AddComplaintScreenState extends State<AddComplaintScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+
+  File? _image;
+  Position? _currentPosition;
+  bool _isSubmitting = false;
+  bool _isLocating = false;
+
+
+  Future<String?> _uploadToCloudinary(File imageFile) async {
+    try {
+      final cloudinary = CloudinaryPublic(
+        cloud_name,
+        complaint_img,
+        cache: false,
+      );
+
+      CloudinaryResponse response = await cloudinary.uploadFile(
+        CloudinaryFile.fromFile(imageFile.path, resourceType: CloudinaryResourceType.Image),
+      );
+
+      return response.secureUrl;
+    } catch (e) {
+      print("Cloudinary Upload Error: $e");
+      return null;
+    }
+  }
+
+  // --- 2. KEYWORDS GENERATOR (For Substring Search) ---
+  List<String> _generateSearchKeywords(String id) {
+    List<String> keywords = [];
+    String upperId = id.toUpperCase();
+    for (int i = 0; i < upperId.length; i++) {
+      for (int j = i + 1; j <= upperId.length; j++) {
+        keywords.add(upperId.substring(i, j));
+      }
+    }
+    return keywords.toSet().toList(); // Remove duplicates
+  }
+
+  // --- 3. PICK IMAGE ---
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile != null) {
+      setState(() => _image = File(pickedFile.path));
+    }
+  }
+
+  // --- 4. GET LOCATION ---
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLocating = true);
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() => _currentPosition = position);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Location Error: $e")));
+    } finally {
+      setState(() => _isLocating = false);
+    }
+  }
+
+  // --- 5. SUBMIT COMPLAINT ---
+  Future<void> _submitComplaint() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      String? finalImageUrl;
+
+      // CALL Cloudinary if image exists
+      if (_image != null) {
+        finalImageUrl = await _uploadToCloudinary(_image!);
+      }
+
+      // Generate Custom ID
+      String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
+
+      // Generate Keywords for Search
+      List<String> keywords = _generateSearchKeywords(customId);
+
+      // Save to Firestore
+      await FirebaseFirestore.instance.collection('complaints').doc(customId).set({
+        'complaintId': customId,
+        'searchKeywords': keywords, // Enabled substring search
+        'title': _titleController.text.trim(),
+        'description': _descController.text.trim(),
+        'category': "General",
+        'userId': user?.uid,
+        'imageUrl': finalImageUrl,
+        'latitude': _currentPosition?.latitude,
+        'longitude': _currentPosition?.longitude,
+        'status': 'Pending',
+        'priority': 'MEDIUM',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Complaint Filed Successfully!')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submission Error: $e')));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('New Complaint')),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Issue Title', border: OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descController,
+                maxLines: 4,
+                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? 'Please describe the issue' : null,
+              ),
+
+              const SizedBox(height: 20),
+
+              // Image Section
+              _image != null
+                  ? ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(_image!, height: 180, width: double.infinity, fit: BoxFit.cover),
+              )
+                  : Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+              ),
+              TextButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text("Select Photo")
+              ),
+
+              const Divider(height: 30),
+
+              // Location Section
+              _isLocating
+                  ? const CircularProgressIndicator()
+                  : Column(
+                children: [
+                  Icon(Icons.location_on, color: _currentPosition == null ? Colors.grey : Colors.red),
+                  Text(_currentPosition == null
+                      ? "Location not attached"
+                      : "Verified: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}"),
+                ],
+              ),
+              TextButton(
+                  onPressed: _getCurrentLocation,
+                  child: const Text("Capture Current Location")
+              ),
+
+              const SizedBox(height: 30),
+
+              _isSubmitting
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0D47A1),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 55),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                  ),
+                  onPressed: _submitComplaint,
+                  child: const Text("SUBMIT COMPLAINT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 class ComplaintSearchDelegate extends SearchDelegate {
   @override
   List<Widget>? buildActions(BuildContext context) {
@@ -85,159 +300,6 @@ class ComplaintSearchDelegate extends SearchDelegate {
           },
         );
       },
-    );
-  }
-}
-
-class AddComplaintScreen extends StatefulWidget {
-  const AddComplaintScreen({super.key});
-
-  @override
-  State<AddComplaintScreen> createState() => _AddComplaintScreenState();
-}
-
-class _AddComplaintScreenState extends State<AddComplaintScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descController = TextEditingController();
-
-  File? _image;
-  Position? _currentPosition;
-  bool _isSubmitting = false;
-  bool _isLocating = false;
-
-  // --- Logic: Pick Image ---
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (pickedFile != null) {
-      setState(() => _image = File(pickedFile.path));
-    }
-  }
-
-  // --- Logic: Get Location ---
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isLocating = true);
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      setState(() => _currentPosition = position);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Location Error: $e")));
-    } finally {
-      setState(() => _isLocating = false);
-    }
-  }
-
-  // --- Logic: Submit to Firebase ---
-  Future<void> _submitComplaint() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isSubmitting = true);
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      String? imageUrl;
-
-      // 1. Upload Image to Firebase Storage if exists
-     /* if (_image != null) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('complaint_images')
-            .child('${DateTime.now().toIso8601String()}.jpg');
-        await ref.putFile(_image!);
-        imageUrl = await ref.getDownloadURL();
-      }*/
-
-      // 2. Generate your Custom ID (as we discussed)
-      // Example: COM-1734963000-USERUID123
-      String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}";
-
-      // 3. Save to Firestore
-      await FirebaseFirestore.instance.collection('complaints').doc(customId).set({
-        'complaintId': customId,
-        'title': _titleController.text.trim(),
-        'description': _descController.text.trim(),
-        'department':"null",
-        'userId': user?.uid,
-        'imageUrl': imageUrl, // Store the URL link
-        'latitude': _currentPosition?.latitude,
-        'longitude': _currentPosition?.longitude,
-        'status': 'Pending',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Submitted!')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('New Complaint')),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descController,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-              ),
-
-              const SizedBox(height: 20),
-              // Image Preview
-              _image != null
-                  ? Image.file(_image!, height: 150)
-                  : const Text("No Image Selected"),
-              TextButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.camera),
-                  label: const Text("Add Photo")
-              ),
-
-              const Divider(),
-              // Location Preview
-              _isLocating
-                  ? const CircularProgressIndicator()
-                  : Text(_currentPosition == null
-                  ? "Location not attached"
-                  : "Lat: ${_currentPosition!.latitude.toStringAsFixed(3)},Lon: ${_currentPosition!.longitude.toStringAsFixed(3)}"),
-              TextButton.icon(
-                  onPressed: _getCurrentLocation,
-                  icon: const Icon(Icons.location_on),
-                  label: const Text("Get Location")
-              ),
-
-              const SizedBox(height: 30),
-              _isSubmitting
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                  onPressed: _submitComplaint,
-                  child: const Text("SUBMIT")
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

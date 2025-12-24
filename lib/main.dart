@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/register_screen.dart';
+import 'Auth_Wrapper.dart';
 
 void main()  async  {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       debugShowCheckedModeBanner: false,
-      home: const RegisterScreen(),
+      home: const AuthWrapper(),
     );
   }
 }
