@@ -113,15 +113,14 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
       String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
 
       // Generate Keywords for Search
-      List<String> keywords = _generateSearchKeywords(customId);
+      //List<String> keywords = _generateSearchKeywords(customId);
 
       // Save to Firestore
       await FirebaseFirestore.instance.collection('complaints').doc(customId).set({
         'complaintId': customId,
-        'searchKeywords': keywords, // Enabled substring search
         'title': _titleController.text.trim(),
         'description': _descController.text.trim(),
-        'category': "General",
+        'category':  "Water Supply Board",
         'userId': user?.uid,
         'imageUrl': finalImageUrl,
         'latitude': _currentPosition?.latitude,

@@ -57,7 +57,7 @@ class ComplaintDetailsPage extends StatelessWidget {
                       ],
                     ),
                     const Divider(height: 30),
-                    _detailRow(Icons.home, "Category", "Water Supply Board"), // Map to your model category
+                    _detailRow(Icons.home, "Category",complaint.category), // Map to your model category
                     const SizedBox(height: 10),
                     _detailRow(Icons.calendar_month, "Submitted On", DateFormat('MMM d, yyyy').format(complaint.date)),
                   ],
