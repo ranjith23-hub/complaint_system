@@ -2,96 +2,135 @@ import 'package:flutter/material.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:intl/intl.dart';
 
-class ComplaintDetailScreen extends StatelessWidget {
+class ComplaintDetailsPage extends StatelessWidget {
   final Complaint complaint;
 
-  const ComplaintDetailScreen({super.key, required this.complaint});
-
-  // Helper to get color based on status string
-  Color _getStatusColor(String status) {
-    if (status == 'Resolved') return Colors.green;
-    if (status == 'Pending') return Colors.orange;
-    return Colors.grey;
-  }
+  const ComplaintDetailsPage({super.key, required this.complaint});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complaint Details'),
+        title: const Text("Complaint Details"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // CivicConnect Logo/Header area
+            const Center(
+              child: Column(
+                children: [
+                  Icon(Icons.business, size: 50, color: Colors.blueGrey),
+                  Text(
+                    "CivicConnect",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0D47A1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Main Details Card
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(complaint.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _statusChip("Submitted", Colors.blue),
+                        const SizedBox(width: 8),
+                        _statusChip("MEDIUM", Colors.orange), // Assuming static for now
+                      ],
+                    ),
+                    const Divider(height: 30),
+                    _detailRow(Icons.home, "Category", "Water Supply Board"), // Map to your model category
+                    const SizedBox(height: 10),
+                    _detailRow(Icons.calendar_month, "Submitted On", DateFormat('MMM d, yyyy').format(complaint.date)),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Description Section
+            _sectionBox("Description", complaint.description),
+
+            const SizedBox(height: 16),
+
+            // Location Section
+            _sectionBox(
+              "Location",
+              "Lat: ${complaint.latitude?.toStringAsFixed(1) ?? '0.0'}, Lon: ${complaint.longitude?.toStringAsFixed(1) ?? '0.0'}",
+              icon: Icons.location_on,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper widget for Category/Date rows
+  Widget _detailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey, size: 20),
+        const SizedBox(width: 10),
+        Text(label, style: const TextStyle(color: Colors.grey)),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  // Helper widget for the boxed sections
+  Widget _sectionBox(String title, String content, {IconData? icon}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- TITLE ---
-          Text(
-            complaint.title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // --- STATUS ---
-          _buildDetailRow(
-              context,
-              Icons.info_outline,
-              'Status',
-              complaint.status,
-              color: _getStatusColor(complaint.status)
-          ),
-
-          // --- DATE (Fixed: changed submittedDate to date) ---
-          _buildDetailRow(
-              context,
-              Icons.calendar_today,
-              'Submitted On',
-              DateFormat.yMMMd().format(complaint.date)
-          ),
-
-          // --- ID ---
-          _buildDetailRow(
-            context,
-            Icons.tag,
-            'Complaint ID',
-            complaint.id,
-          ),
-
-          const Divider(height: 32),
-
-          // --- DESCRIPTION ---
-          Text(
-            'Description',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 8),
-          Text(
-            complaint.description,
-            style: Theme.of(context).textTheme.bodyLarge,
+          Row(
+            children: [
+              if (icon != null) Icon(icon, color: Colors.red, size: 18),
+              if (icon != null) const SizedBox(width: 8),
+              Text(content),
+            ],
           ),
-
-          const Divider(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey.shade600),
-          const SizedBox(width: 16),
-          Text('$label:', style: Theme.of(context).textTheme.titleSmall),
-          const Spacer(),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
+  Widget _statusChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
       ),
+      child: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
     );
   }
 }

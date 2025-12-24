@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:complaint_system/screens/complaint_detail_screen.dart';
+import 'package:complaint_system/models/complaint_model.dart';
 //import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
 
@@ -45,21 +47,39 @@ class ComplaintSearchDelegate extends SearchDelegate {
           .where('complaintId', isLessThanOrEqualTo: searchText.trim().toUpperCase() + '\uf8ff')
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No complaints found."));
+        }
 
         var docs = snapshot.data!.docs;
-        if (docs.isEmpty) return const Center(child: Text("No complaints found."));
 
         return ListView.builder(
           itemCount: docs.length,
           itemBuilder: (context, index) {
-            var data = docs[index].data() as Map<String, dynamic>;
+            // 1. Map Firestore data to your NEW Complaint model
+            final data = docs[index].data() as Map<String, dynamic>;
+            final complaint = Complaint.fromFirestore(data);
+
             return ListTile(
-              title: Text(data['complaintId']),
-              subtitle: Text(data['title']),
+              leading: const Icon(Icons.description, color: Color(0xFF0D47A1)),
+              title: Text(complaint.complaintId),
+              subtitle: Text(complaint.title),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () {
-                // Navigate to the detail page we built earlier
-                // close(context, null); // Close search
+                // 2. Close the search bar first
+                close(context, null);
+
+                // 3. Navigate to the Details Page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ComplaintDetailsPage(complaint: complaint),
+                  ),
+                );
               },
             );
           },
@@ -139,6 +159,7 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
         'complaintId': customId,
         'title': _titleController.text.trim(),
         'description': _descController.text.trim(),
+        'department':"null",
         'userId': user?.uid,
         'imageUrl': imageUrl, // Store the URL link
         'latitude': _currentPosition?.latitude,
@@ -198,7 +219,7 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
                   ? const CircularProgressIndicator()
                   : Text(_currentPosition == null
                   ? "Location not attached"
-                  : "Lat: ${_currentPosition!.latitude.toStringAsFixed(3)}"),
+                  : "Lat: ${_currentPosition!.latitude.toStringAsFixed(3)},Lon: ${_currentPosition!.longitude.toStringAsFixed(3)}"),
               TextButton.icon(
                   onPressed: _getCurrentLocation,
                   icon: const Icon(Icons.location_on),

@@ -47,53 +47,40 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
           ),
         ],
       ),
-      // --- CHANGED: FutureBuilder -> StreamBuilder ---
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('complaints')
-            .where('userId', isEqualTo: currentUser?.uid) // Filter by logged-in user
-            .orderBy('createdAt', descending: true)       // Sort by newest
-            .snapshots(),
-        builder: (context, snapshot) {
-          // 1. Handle Loading
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        body: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('complaints')
+                .where('userId', isEqualTo: currentUser?.uid)
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          }
+            }
 
-          // 2. Handle Errors
-          if (snapshot.hasError) {
+            if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          }
+            }
 
-          // 3. Handle Empty Data
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text('You have not filed any complaints yet.'));
-          }
+            }
 
-          // 4. Map Firestore Documents to your Complaint Model
-          // We convert the List<QueryDocumentSnapshot> into List<Complaint>
-          final List<Complaint> complaints = snapshot.data!.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
+            // 4. Map Firestore Documents to your NEW Complaint Model
+            // This uses the factory method from your new model
+            final List<Complaint> complaints = snapshot.data!.docs.map((doc) {
+            return Complaint.fromFirestore(doc.data() as Map<String, dynamic>);
+            }).toList();
 
-            // Assuming your Complaint model has a factory or constructor like this:
-            return Complaint(
-              id: doc.id, // Firestore Document ID
-              title: data['title'] ?? '',
-              description: data['description'] ?? '',
-              status: data['status'] ?? 'Pending',
-              date: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-            );
-          }).toList();
-
-          return ListView.builder(
+            return ListView.builder(
             itemCount: complaints.length,
             padding: const EdgeInsets.all(10),
             itemBuilder: (context, index) {
-              return ComplaintCard(complaint: complaints[index]);
+            return ComplaintCard(complaint: complaints[index]);
             },
-          );
-        },
-      ),
+            );
+            },
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // No need to await or refresh manually! StreamBuilder handles it.
