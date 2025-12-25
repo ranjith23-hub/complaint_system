@@ -10,15 +10,6 @@ import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:complaint_system/models/Application.dart';
 //import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
-import 'package:complaint_system/models/complaint_model.dart';
-import 'package:complaint_system/screens/complaint_detail_screen.dart';
 
 class AddComplaintScreen extends StatefulWidget {
   const AddComplaintScreen({super.key});
