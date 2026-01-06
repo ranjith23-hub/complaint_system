@@ -2,11 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/complaint_model.dart';
 import '../screens/complaint_detail_screen.dart';
+import 'package:flutter/services.dart';
 
 class ComplaintCard extends StatelessWidget {
   final Complaint complaint;
   const ComplaintCard({super.key, required this.complaint});
-
+  void _copyToClipboard(BuildContext context, String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('ID Copied: $text'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF4CAF50),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final Color statusColor = complaint.status == 'Resolved' ? Colors.green : Colors.orange;
@@ -33,7 +43,31 @@ class ComplaintCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(complaint.complaintId, maxLines: 2, overflow: TextOverflow.ellipsis),
+              // REPLACE the Expanded block in your build method with this:
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      "ID: ${complaint.complaintId}", // Ensure this field name matches your model
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        color: Colors.blueGrey,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.content_copy_rounded, color: Color(0xFF0D47A1), size: 18),
+                    tooltip: "Copy ID",
+                    onPressed: () => _copyToClipboard(context, complaint.complaintId),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 8),
               Text(complaint.description, maxLines: 2, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 12),

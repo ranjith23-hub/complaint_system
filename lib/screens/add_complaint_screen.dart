@@ -8,7 +8,7 @@ import 'package:complaint_system/screens/complaint_detail_screen.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:complaint_system/models/Application.dart';
-//import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
+import 'package:flutter/services.dart';
 
 
 class AddComplaintScreen extends StatefulWidget {
@@ -28,6 +28,16 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
   bool _isSubmitting = false;
   bool _isLocating = false;
 
+  void _copyToClipboard(BuildContext context, String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('ID Copied: $text'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF4CAF50),
+      ),
+    );
+  }
 
   Future<String?> _uploadToCloudinary(File imageFile) async {
     try {
@@ -48,17 +58,6 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
     }
   }
 
-  // --- 2. KEYWORDS GENERATOR (For Substring Search) ---
-  List<String> _generateSearchKeywords(String id) {
-    List<String> keywords = [];
-    String upperId = id.toUpperCase();
-    for (int i = 0; i < upperId.length; i++) {
-      for (int j = i + 1; j <= upperId.length; j++) {
-        keywords.add(upperId.substring(i, j));
-      }
-    }
-    return keywords.toSet().toList(); // Remove duplicates
-  }
 
   // --- 3. PICK IMAGE ---
   Future<void> _pickImage() async {
@@ -101,7 +100,15 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
       }
 
       // Generate Custom ID
-      String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
+      String timePart = DateTime.now().microsecondsSinceEpoch.toRadixString(36).toUpperCase();
+      timePart = timePart.substring(timePart.length - 6);
+
+      // 2. Get the first 3 characters of the User ID (prevents collisions)
+      String userPart = (user?.uid ?? "GUEST").substring(0, 3).toUpperCase();
+
+      // Result example: COM-X7J2A1-B9Z
+      String customId= "COM-$timePart-$userPart";
+      //String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
 
       // Generate Keywords for Search
       //List<String> keywords = _generateSearchKeywords(customId);
@@ -245,9 +252,11 @@ class ComplaintSearchDelegate extends SearchDelegate {
 
   // --- Helper to query Firestore ---
   Widget _buildSearchResults(String searchText) {
+    final user = FirebaseAuth.instance.currentUser;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('complaints')
+          .where('userId',isEqualTo: user?.uid)
           .where('complaintId', isGreaterThanOrEqualTo: searchText.trim().toUpperCase())
           .where('complaintId', isLessThanOrEqualTo: searchText.trim().toUpperCase() + '\uf8ff')
           .snapshots(),

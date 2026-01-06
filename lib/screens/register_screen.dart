@@ -1,5 +1,6 @@
 import 'dart:io';
-
+import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:complaint_system/models/Application.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,9 @@ import 'package:complaint_system/screens/official_dashboard_screen.dart';
 import 'package:complaint_system/screens/login_screen.dart';
 import 'package:complaint_system/services/user_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -19,7 +23,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final ImagePicker _picker = ImagePicker();
-  XFile? _pickedImage;
+  File? _pickedImage;
   String? _selectedRole;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -31,6 +35,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color civicBlue = Color(0xFF0D47A1); // Example blue
   static const Color civicGreen = Color(0xFF4CAF50); // Example green
 
+
+  Future<String> getAddressFromLatLng(double lat, double lng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+      Placemark place = placemarks[0];
+      return "${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}";
+    } catch (e) {
+      return "Address not found";
+    }
+  }
+
+  double? lat, lng;
+  String? _currentAddress;
+  final TextEditingController _addressController = TextEditingController();
+  bool _loadingLocation = false;
+  Future<void> _getUserLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // 1. Check if location services are enabled on the phone
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location services are disabled. Please turn on GPS.')),
+      );
+      return;
+    }
+
+    // 2. Check permission status
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      // Request permission if denied
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permissions are denied.')),
+        );
+        return;
+      }
+    }
+
+    // 3. Handle permanent denial
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permissions are permanently denied. Please enable in settings.')),
+      );
+      return;
+    }
+    setState(() => _loadingLocation = true);
+    setState(() => _loadingLocation = true);
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude, position.longitude);
+
+      Placemark p = placemarks[0];
+      String formattedAddress = "${p.street}, ${p.subLocality}, ${p.locality}, ${p.postalCode}";
+
+      setState(() {
+        _addressController.text = formattedAddress;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Location permission or service denied.")),
+      );
+    } finally {
+      setState(() => _loadingLocation = false);
+    }
+  }
+
+
+  Future<String?> _uploadToCloudinary(File imageFile) async {
+    try {
+      final cloudinary = CloudinaryPublic(
+        cloud_name,
+        complaint_img,
+        cache: false,
+      );
+
+      CloudinaryResponse response = await cloudinary.uploadFile(
+        CloudinaryFile.fromFile(imageFile.path, resourceType: CloudinaryResourceType.Image),
+      );
+
+      return response.secureUrl;
+    } catch (e) {
+      print("Cloudinary Upload Error: $e");
+      return null;
+    }
+  }
 
   Future<void> registerUser({
     required BuildContext context,
@@ -53,14 +147,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       String uid = userCredential.user!.uid;
+      String? finalImageUrl;
 
+      if (_pickedImage != null) {
+        finalImageUrl = await _uploadToCloudinary(_pickedImage!);
+      }
       // Store user profile in Firestore (NO PASSWORD)
+      double? finalLat = lat;
+      double? finalLng = lng;
+
+      try {
+        // Silent background fetch to get the most up-to-date "Hard Fact"
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5), // Don't let it hang forever
+        );
+        finalLat = position.latitude;
+        finalLng = position.longitude;
+      } catch (e) {
+        debugPrint("Background location fetch failed, using previous or null");
+      }
+
       await FirebaseFirestore.instance.collection('Users').doc(uid).set({
         'name': name,
         'email': email,
         'phone': phone,
         'role': role,
-        'url': null,
+        'url': finalImageUrl,
+        'address': _addressController.text.trim(),
+        'latitude':  finalLat ?? 0.0,
+        'longitude': finalLng?? 0.0,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -102,6 +218,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
 
+  Future<void> _pickImage() async {
+    final picFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (picFile != null) {
+      setState(() => _pickedImage= File(picFile.path));
+    }
+  }
 
 
   @override
@@ -207,7 +329,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // --- Upload Photo ---
               GestureDetector(
-                onTap: (){},
+                onTap: _pickImage,
                 child: Container(
                   height: 60,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -229,12 +351,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                            child: Text(
-                              _pickedImage!.name.length > 20
-                                  ? '${_pickedImage!.name.substring(0, 20)}...'
-                                  : _pickedImage!.name,
-                              overflow: TextOverflow.ellipsis,
-                            )),
+                          child: Text(
+                            _pickedImage!.path.split('/').last, // Get filename from path
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                         const Icon(Icons.photo_library_outlined, color: civicGreen),
                       ] else ...[
                         const Icon(Icons.camera_alt_outlined, color: Colors.grey),
@@ -244,6 +365,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const Icon(Icons.upload_file_outlined, color: Colors.grey),
                       ],
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _addressController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: "Home Address",
+                  hintText: "Enter your address or tap the icon",
+                  prefixIcon: const Icon(Icons.home_outlined),
+                  border:inputBorder,
+
+                  // --- ICON BUTTON TO AUTO-FILL ---
+                  suffixIcon: _loadingLocation
+                      ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : IconButton(
+                    icon: const Icon(Icons.my_location, color: Color(0xFF0D47A1)),
+                    onPressed: _getUserLocation,
                   ),
                 ),
               ),
@@ -285,6 +428,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       password: _passwordController.text.trim(),
                       phone: _phoneController.text.trim(),
                       role: _selectedRole == "Citizen" ? "CITIZEN" : "OFFICIAL", startLoading: () {  }, stopLoading: () {  },
+
                     );
 
                     if (mounted) setState(() => _loading = false);
