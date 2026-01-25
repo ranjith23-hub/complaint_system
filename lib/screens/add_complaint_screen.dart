@@ -7,8 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:complaint_system/screens/complaint_detail_screen.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
-import 'package:complaint_system/models/Application.dart';
-import 'package:flutter/services.dart';
+//import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
 
 class AddComplaintScreen extends StatefulWidget {
@@ -28,22 +27,22 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
   bool _isSubmitting = false;
   bool _isLocating = false;
 
-  void _copyToClipboard(BuildContext context, String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('ID Copied: $text'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF4CAF50),
-      ),
-    );
-  }
 
   Future<String?> _uploadToCloudinary(File imageFile) async {
     try {
+      // Use environment variables for Cloudinary credentials (safe defaults)
+      const String cloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME', defaultValue: 'dummy');
+      const String uploadPreset = String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET', defaultValue: 'dummy');
+
+      // If using dummy values, skip upload and return null
+      if (cloudName == 'dummy' || uploadPreset == 'dummy') {
+        print("Cloudinary credentials not configured; using placeholder imageUrl");
+        return null;
+      }
+
       final cloudinary = CloudinaryPublic(
-        cloud_name,
-        complaint_img,
+        cloudName,
+        uploadPreset,
         cache: false,
       );
 
@@ -58,6 +57,17 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
     }
   }
 
+  // --- 2. KEYWORDS GENERATOR (For Substring Search) ---
+  List<String> _generateSearchKeywords(String id) {
+    List<String> keywords = [];
+    String upperId = id.toUpperCase();
+    for (int i = 0; i < upperId.length; i++) {
+      for (int j = i + 1; j <= upperId.length; j++) {
+        keywords.add(upperId.substring(i, j));
+      }
+    }
+    return keywords.toSet().toList(); // Remove duplicates
+  }
 
   // --- 3. PICK IMAGE ---
   Future<void> _pickImage() async {
@@ -100,32 +110,24 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
       }
 
       // Generate Custom ID
-      String timePart = DateTime.now().microsecondsSinceEpoch.toRadixString(36).toUpperCase();
-      timePart = timePart.substring(timePart.length - 6);
-
-      // 2. Get the first 3 characters of the User ID (prevents collisions)
-      String userPart = (user?.uid ?? "GUEST").substring(0, 3).toUpperCase();
-
-      // Result example: COM-X7J2A1-B9Z
-      String customId= "COM-$timePart-$userPart";
-      //String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
+      String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
 
       // Generate Keywords for Search
       //List<String> keywords = _generateSearchKeywords(customId);
 
       // Save to Firestore
       await FirebaseFirestore.instance.collection('complaints').doc(customId).set({
+        // Required frontend fields only; AI fields are added by backend listener
         'complaintId': customId,
         'title': _titleController.text.trim(),
         'description': _descController.text.trim(),
-        'category':  "Water Supply Board",
         'userId': user?.uid,
         'imageUrl': finalImageUrl,
         'latitude': _currentPosition?.latitude,
         'longitude': _currentPosition?.longitude,
         'status': 'Pending',
-        'priority': 'MEDIUM',
         'createdAt': FieldValue.serverTimestamp(),
+        'assignedTo': 'sakthi@gmail.com',
       });
 
       if (mounted) {
@@ -252,11 +254,9 @@ class ComplaintSearchDelegate extends SearchDelegate {
 
   // --- Helper to query Firestore ---
   Widget _buildSearchResults(String searchText) {
-    final user = FirebaseAuth.instance.currentUser;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('complaints')
-          .where('userId',isEqualTo: user?.uid)
           .where('complaintId', isGreaterThanOrEqualTo: searchText.trim().toUpperCase())
           .where('complaintId', isLessThanOrEqualTo: searchText.trim().toUpperCase() + '\uf8ff')
           .snapshots(),

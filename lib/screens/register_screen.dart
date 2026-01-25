@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:cloudinary_public/cloudinary_public.dart';
-import 'package:complaint_system/models/Application.dart';
+//import 'package:complaint_system/models/Application.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -110,8 +110,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<String?> _uploadToCloudinary(File imageFile) async {
     try {
       final cloudinary = CloudinaryPublic(
-        cloud_name,
-        complaint_img,
+        "",
+        "",
         cache: false,
       );
 

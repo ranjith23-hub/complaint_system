@@ -10,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
     try {
       var snapshot;
       if(status=='Resolved') {
-         snapshot = await FirebaseFirestore.instance
+        snapshot = await FirebaseFirestore.instance
             .collection('complaints')
             .where('userId', isEqualTo: uid)
             .where('status', isEqualTo: status)
