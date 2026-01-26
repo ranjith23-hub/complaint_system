@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:complaint_system/screens/login_screen.dart';
 import 'package:complaint_system/screens/JobDetailsScreen.dart';
+import 'package:complaint_system/screens/ProfileScreen.dart';
 
 class OfficialDashboardScreen extends StatefulWidget {
   const OfficialDashboardScreen({super.key});
@@ -19,21 +20,16 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    printAllAssignedTo();   // 👈 DEBUG: Fetch all assignedTo values
+    printAllAssignedTo();
   }
 
   Future<void> printAllAssignedTo() async {
     try {
-      print("📥 Fetching all assignedTo values from Firestore...");
-
       final snapshot =
       await FirebaseFirestore.instance.collection('complaints').get();
 
-      print("📊 Total complaints: ${snapshot.docs.length}");
-
       for (var doc in snapshot.docs) {
         final data = doc.data();
-
         print("🆔 Doc ID: ${doc.id}");
         print("👤 Assigned To: ${data['assignedTo']}");
         print("-----------------------------------------");
@@ -47,9 +43,6 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
   Widget build(BuildContext context) {
     final User? currentUser = FirebaseAuth.instance.currentUser;
 
-    print("🔍 Current User UID: ${currentUser?.uid}");
-    print("🔍 Current User Email: ${currentUser?.email}");
-
     if (currentUser == null) {
       return const Scaffold(
         body: Center(
@@ -58,16 +51,27 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
       );
     }
 
-    print("🔥 Listening to complaints assigned to: sakthi@gmail.com");
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Assigned Complaints'),
+        backgroundColor: const Color(0xFF0D47A1),
+        foregroundColor: Colors.white,
         actions: [
+          // 👤 Profile Button
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+
+          // 🚪 Logout Button
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              print("🚪 Logging out user: ${currentUser.email}");
               await FirebaseAuth.instance.signOut();
               Navigator.pushAndRemoveUntil(
                 context,
@@ -78,28 +82,24 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
           ),
         ],
       ),
+
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('complaints')
-            .where('assignedTo', isEqualTo: 'sakthi@gmail.com')
+            .where('assignedTo', isEqualTo: currentUser.email)
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          print("📡 Snapshot Connection State: ${snapshot.connectionState}");
-          print("📦 Snapshot hasData: ${snapshot.hasData}");
-          print("📄 Snapshot docs count: ${snapshot.data?.docs.length}");
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            print("❌ Firestore Error: ${snapshot.error}");
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            print("⚠️ No complaints assigned to sakthi@gmail.com");
             return const Center(
               child: Text('No active complaints assigned.'),
             );
@@ -113,19 +113,10 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
             itemBuilder: (context, index) {
               final doc = docs[index];
 
-              print("🧾 Raw Firestore Data: ${doc.data()}");
-              print("🆔 Document ID: ${doc.id}");
-
               final complaint = Complaint.fromWorkerFirestore(
                 doc.data() as Map<String, dynamic>,
                 doc.id,
               );
-
-              print("✅ Complaint Loaded:");
-              print("   ID: ${complaint.complaintId}");
-              print("   Title: ${complaint.title}");
-              print("   Assigned To: ${complaint.assignedTo}");
-              print("   Status: ${complaint.status}");
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
@@ -139,7 +130,6 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    print("➡️ Opening job detail for: ${complaint.complaintId}");
                     Navigator.push(
                       context,
                       MaterialPageRoute(

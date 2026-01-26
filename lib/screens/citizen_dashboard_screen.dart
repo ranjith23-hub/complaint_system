@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:complaint_system/models/complaint_model.dart'; // Ensure this exists
+
+import 'package:complaint_system/models/complaint_model.dart';
 import 'package:complaint_system/screens/add_complaint_screen.dart';
-import 'package:complaint_system/complaint_card.dart'; // Ensure this exists
+import 'package:complaint_system/complaint_card.dart';
 import 'package:complaint_system/screens/login_screen.dart';
+import 'package:complaint_system/screens/ProfileScreen.dart';
 
 class CitizenDashboardScreen extends StatefulWidget {
   const CitizenDashboardScreen({super.key});
@@ -22,7 +24,10 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Complaints'),
+        backgroundColor: const Color(0xFF0D47A1),
+        foregroundColor: Colors.white,
         actions: [
+          // 🔍 Search Button
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -32,6 +37,19 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
               );
             },
           ),
+
+          // 👤 Profile Button
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+
+          // 🚪 Logout Button
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -47,6 +65,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
           ),
         ],
       ),
+
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('complaints')
@@ -54,6 +73,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -63,32 +83,38 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('You have not filed any complaints yet.'));
+            return const Center(
+              child: Text(
+                'You have not filed any complaints yet.',
+                style: TextStyle(fontSize: 16),
+              ),
+            );
           }
 
-          // 4. Map Firestore Documents to your NEW Complaint Model
-          // This uses the factory method from your new model
           final List<Complaint> complaints = snapshot.data!.docs.map((doc) {
-            return Complaint.fromFirestore(doc.data() as Map<String, dynamic>);
+            return Complaint.fromFirestore(
+                doc.data() as Map<String, dynamic>);
           }).toList();
 
           return ListView.builder(
             itemCount: complaints.length,
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             itemBuilder: (context, index) {
               return ComplaintCard(complaint: complaints[index]);
             },
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // No need to await or refresh manually! StreamBuilder handles it.
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddComplaintScreen()),
+            MaterialPageRoute(
+                builder: (context) => const AddComplaintScreen()),
           );
         },
+        backgroundColor: const Color(0xFF0D47A1),
         icon: const Icon(Icons.add),
         label: const Text('New Complaint'),
       ),
