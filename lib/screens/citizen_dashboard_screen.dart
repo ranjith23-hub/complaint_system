@@ -28,17 +28,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
         foregroundColor: Colors.white,
         actions: [
           // 🔍 Search
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: ComplaintSearchDelegate(currentUser!.uid),
-              );
-            },
-          ),
 
-          // ⋮ Three Dot Menu
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
@@ -59,9 +49,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                   context: context,
                   builder: (_) => AlertDialog(
                     title: const Text('Help'),
-                    content: const Text(
-                      'Contact support for assistance.',
-                    ),
+                    content: const Text('Contact support for assistance.'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
@@ -72,21 +60,40 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                 );
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
                 value: 'profile',
-                child: Text('My Profile'),
+                child: Row(
+                  children: const [
+                    Icon(Icons.person, color: Colors.black54),
+                    SizedBox(width: 12),
+                    Text('My Profile'),
+                  ],
+                ),
               ),
-              PopupMenuItem(
+              PopupMenuItem<String>(
                 value: 'find',
-                child: Text('Find Complaint'),
+                child: Row(
+                  children: const [
+                    Icon(Icons.search, color: Colors.black54),
+                    SizedBox(width: 12),
+                    Text('Find Complaint'),
+                  ],
+                ),
               ),
-              PopupMenuItem(
+              PopupMenuItem<String>(
                 value: 'help',
-                child: Text('Help'),
+                child: Row(
+                  children: const [
+                    Icon(Icons.help_outline, color: Colors.black54),
+                    SizedBox(width: 12),
+                    Text('Help'),
+                  ],
+                ),
               ),
             ],
           ),
+
 
           // 🚪 Logout
           IconButton(

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:complaint_system/models/complaint_model.dart';
+import 'package:complaint_system/services/gamification_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 class JobDetailScreen extends StatefulWidget {
   final Complaint task;
@@ -10,6 +11,8 @@ class JobDetailScreen extends StatefulWidget {
   @override
   State<JobDetailScreen> createState() => _JobDetailScreenState();
 }
+
+
 
 class _JobDetailScreenState extends State<JobDetailScreen> {
   final TextEditingController _resolutionController = TextEditingController();
@@ -133,7 +136,21 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                 await _updateFirestoreTask("Resolved", resolution: _resolutionController.text);
                 Navigator.pop(context); // Close sheet
                 Navigator.pop(context); // Back to queue
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Job Completed! Citizen notified.")));
+                // 1. Existing logic to update the complaint status
+                await _updateFirestoreTask("Resolved", resolution: _resolutionController.text);
+
+                // 2. ADD THIS: Award points to the citizen who filed the complaint
+                await GamificationService().awardPointsForResolution(widget.task.userId);
+
+                Navigator.pop(context); // Close sheet
+                Navigator.pop(context); // Back to queue
+
+                // Optional: Update the snackbar to mention points
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Job Completed! Points awarded to citizen."))
+                );
+
+
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
               child: const Text("FINALIZE & CLOSE"),

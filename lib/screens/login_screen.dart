@@ -192,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _loading ? null : loginUser,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: civicGreen, // Use logo color
+                    backgroundColor: const Color(0xFF5B2D91), // Use logo color
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

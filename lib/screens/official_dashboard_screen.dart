@@ -6,6 +6,7 @@ import 'package:complaint_system/models/complaint_model.dart';
 import 'package:complaint_system/screens/login_screen.dart';
 import 'package:complaint_system/screens/JobDetailsScreen.dart';
 import 'package:complaint_system/screens/ProfileScreen.dart';
+import 'package:complaint_system/screens/leaderboard_screen.dart';
 
 class OfficialDashboardScreen extends StatefulWidget {
   const OfficialDashboardScreen({super.key});
@@ -52,16 +53,22 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
         foregroundColor: Colors.white,
         actions: [
           // 🔍 SEARCH
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate:
-                OfficialComplaintSearchDelegate(currentUser.email!),
-              );
-            },
-          ),
+
+          // lib/screens/official_dashboard_screen.dart
+// Inside the actions: [] list of your AppBar
+
+            IconButton(
+              icon: const Icon(Icons.leaderboard),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+                );
+              },
+            ),
+            // ... existing Profile and Logout buttons
+
+
 
           // ⋮ THREE DOT MENU
           PopupMenuButton<String>(

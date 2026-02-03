@@ -435,7 +435,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFF5B2D91),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

@@ -43,7 +43,7 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('My Profile'),
-        backgroundColor: const Color(0xFF0D47A1), // Civic Blue
+        backgroundColor:   const Color(0xFF5B2D91), // Civic Blue
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -74,7 +74,7 @@ class ProfileScreen extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF0D47A1),
+                    color:   const Color(0xFF5B2D91),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(30),
                       bottomRight: Radius.circular(30),
