@@ -7,6 +7,7 @@ import 'package:complaint_system/screens/login_screen.dart';
 import 'package:complaint_system/screens/JobDetailsScreen.dart';
 import 'package:complaint_system/screens/ProfileScreen.dart';
 import 'package:complaint_system/screens/leaderboard_screen.dart';
+import 'package:complaint_system/screens/analytics_dashboard_screen.dart';
 
 class OfficialDashboardScreen extends StatefulWidget {
   const OfficialDashboardScreen({super.key});
@@ -17,6 +18,7 @@ class OfficialDashboardScreen extends StatefulWidget {
 }
 
 class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
+  // Helper to get status colors
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -52,65 +54,75 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
         backgroundColor: const Color(0xFF5B2D91),
         foregroundColor: Colors.white,
         actions: [
-          // 🔍 SEARCH
-
-          // lib/screens/official_dashboard_screen.dart
-// Inside the actions: [] list of your AppBar
-
-            IconButton(
-              icon: const Icon(Icons.leaderboard),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
-                );
-              },
-            ),
-            // ... existing Profile and Logout buttons
-
-
+          // 🏆 Leaderboard Shortcut
+          IconButton(
+            icon: const Icon(Icons.leaderboard),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+              );
+            },
+          ),
 
           // ⋮ THREE DOT MENU
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
-              if (value == 'profile') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ProfileScreen(),
-                  ),
-                );
-              } else if (value == 'find') {
-                showSearch(
-                  context: context,
-                  delegate:
-                  OfficialComplaintSearchDelegate(currentUser.email!),
-                );
-              } else if (value == 'help') {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text("Help"),
-                    content: const Text(
-                      "For assistance, please contact the system administrator.",
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("OK"),
+              switch (value) {
+                case 'analytics':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AnalyticsDashboardScreen()),
+                  );
+                  break;
+                case 'profile':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                  break;
+                case 'find':
+                  showSearch(
+                    context: context,
+                    delegate: OfficialComplaintSearchDelegate(currentUser.email!),
+                  );
+                  break;
+                case 'help':
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text("Help"),
+                      content: const Text(
+                        "For assistance, please contact the system administrator.",
                       ),
-                    ],
-                  ),
-                );
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("OK"),
+                        ),
+                      ],
+                    ),
+                  );
+                  break;
               }
             },
             itemBuilder: (context) => const [
               PopupMenuItem(
+                value: 'analytics',
+                child: Row(
+                  children: [
+                    Icon(Icons.analytics, size: 20, color: Colors.black87),
+                    SizedBox(width: 10),
+                    Text("Analytics"),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person, size: 20),
+                    Icon(Icons.person, size: 20, color: Colors.black87),
                     SizedBox(width: 10),
                     Text("My Profile"),
                   ],
@@ -120,7 +132,7 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
                 value: 'find',
                 child: Row(
                   children: [
-                    Icon(Icons.search, size: 20),
+                    Icon(Icons.search, size: 20, color: Colors.black87),
                     SizedBox(width: 10),
                     Text("Find Complaint"),
                   ],
@@ -130,7 +142,7 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
                 value: 'help',
                 child: Row(
                   children: [
-                    Icon(Icons.help_outline, size: 20),
+                    Icon(Icons.help_outline, size: 20, color: Colors.black87),
                     SizedBox(width: 10),
                     Text("Help"),
                   ],
@@ -164,6 +176,10 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -212,24 +228,21 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
                         ),
                         const SizedBox(height: 8),
                         Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Chip(
                               label: Text(
                                 complaint.category,
-                                style: const TextStyle(color: Colors.white),
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
                               ),
-                              backgroundColor:
-                              const Color(0xFF0D47A1),
+                              backgroundColor: const Color(0xFF0D47A1),
                             ),
                             Chip(
                               label: Text(
                                 complaint.status,
-                                style: const TextStyle(color: Colors.white),
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
                               ),
-                              backgroundColor:
-                              _statusColor(complaint.status),
+                              backgroundColor: _statusColor(complaint.status),
                             ),
                           ],
                         ),
@@ -247,7 +260,7 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// 🔍 SEARCH DELEGATE (same file)
+// 🔍 SEARCH DELEGATE
 //////////////////////////////////////////////////////////////////////////////
 
 class OfficialComplaintSearchDelegate extends SearchDelegate {
