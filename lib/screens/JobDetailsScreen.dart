@@ -106,7 +106,6 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       ),
     );
   }
-
   void _showResolutionDialog() {
     showModalBottomSheet(
       context: context,
