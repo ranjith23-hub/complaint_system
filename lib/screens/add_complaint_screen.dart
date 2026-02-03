@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:complaint_system/screens/complaint_detail_screen.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:complaint_system/models/Application.dart';
 //import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
 
@@ -30,15 +31,9 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
 
   Future<String?> _uploadToCloudinary(File imageFile) async {
     try {
-      // Use environment variables for Cloudinary credentials (safe defaults)
-      const String cloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME', defaultValue: 'dummy');
-      const String uploadPreset = String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET', defaultValue: 'dummy');
+      String cloudName =Application.cloud_name;
+      String uploadPreset= Application.complaint_img;
 
-      // If using dummy values, skip upload and return null
-      if (cloudName == 'dummy' || uploadPreset == 'dummy') {
-        print("Cloudinary credentials not configured; using placeholder imageUrl");
-        return null;
-      }
 
       final cloudinary = CloudinaryPublic(
         cloudName,
@@ -110,10 +105,8 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
       }
 
       // Generate Custom ID
-      String customId = "COM-${DateTime.now().millisecondsSinceEpoch}-${user?.uid.substring(0, 5)}".toUpperCase();
-
-      // Generate Keywords for Search
-      //List<String> keywords = _generateSearchKeywords(customId);
+      String customId = "C-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}-${user?.uid.substring(0, 3)}".toUpperCase();
+// Result example: C-M6S4K2X1-A4F
 
       // Save to Firestore
       await FirebaseFirestore.instance.collection('complaints').doc(customId).set({

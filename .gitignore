@@ -7,7 +7,7 @@
 google-services.json
 firebase.json
 lib/firebase_options.dart
-
+lib/models/Application.dart
 # =========================
 # Dart / Flutter
 # =========================

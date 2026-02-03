@@ -1,3 +1,4 @@
+import 'package:complaint_system/screens/track_complaint_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -39,7 +40,15 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                     builder: (_) => const ProfileScreen(),
                   ),
                 );
-              } else if (value == 'find') {
+              } else if(value == 'track'){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const TrackComplaintScreen(),
+                  ),
+                );
+              }
+              else if (value == 'find') {
                 showSearch(
                   context: context,
                   delegate: ComplaintSearchDelegate(currentUser!.uid),
@@ -78,6 +87,16 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                     Icon(Icons.search, color: Colors.black54),
                     SizedBox(width: 12),
                     Text('Find Complaint'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'track',
+                child: Row(
+                  children: const [
+                    Icon(Icons.search, color: Colors.black54),
+                    SizedBox(width: 12),
+                    Text('Track Complaint'),
                   ],
                 ),
               ),

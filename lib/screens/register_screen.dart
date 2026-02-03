@@ -13,6 +13,7 @@ import 'package:complaint_system/services/user_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:complaint_system/models/Application.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -109,9 +110,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<String?> _uploadToCloudinary(File imageFile) async {
     try {
+      String cloudName =Application.cloud_name;
+      String uploadPreset= Application.complaint_img;
+
+
       final cloudinary = CloudinaryPublic(
-        "",
-        "",
+        cloudName,
+        uploadPreset,
         cache: false,
       );
 
@@ -119,6 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         CloudinaryFile.fromFile(imageFile.path, resourceType: CloudinaryResourceType.Image),
       );
 
+      print("UPLOAD SUCCESS: ${response.secureUrl}");
       return response.secureUrl;
     } catch (e) {
       print("Cloudinary Upload Error: $e");
