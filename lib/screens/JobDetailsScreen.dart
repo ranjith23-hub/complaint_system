@@ -1,8 +1,11 @@
 // job_details.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:complaint_system/services/gamification_service.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 class JobDetailScreen extends StatefulWidget {
   final Complaint task;
@@ -51,6 +54,26 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
+  final ImagePicker _picker = ImagePicker();
+  File? _pickedImage;
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery, // Or ImageSource.camera
+        imageQuality: 70, // Compresses image for faster Firestore/Cloudinary upload
+      );
+
+      if (image != null) {
+        setState(() {
+          _pickedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
+    }
+  }
+
 
   void _startWork() async {
     await _updateFirestoreTask("In Progress");
@@ -82,7 +105,24 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               trailing: TextButton(onPressed: _openGoogleMaps, child: const Text("NAVIGATE")),
             ),
             const SizedBox(height: 40),
-            // START WORK BUTTON
+            // START WORK BUTTON\
+            if (widget.task.imageUrl != null && widget.task.imageUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(
+                  widget.task.imageUrl!,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.broken_image, size: 50),
+                ),
+              ),
+
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -125,10 +165,33 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               decoration: const InputDecoration(labelText: "Action Taken", border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
-            Container(
-              height: 100, width: double.infinity,
-              decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.camera_alt, color: Colors.grey),
+            InkWell(
+              onTap: _pickImage, // This calls the function below
+              child: Container(
+                height: 150, // Increased height for better preview
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: _pickedImage != null
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _pickedImage!,
+                    fit: BoxFit.cover,
+                  ),
+                )
+                    : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.camera_alt, color: Colors.grey, size: 40),
+                    const SizedBox(height: 8),
+                    Text("Select Photo", style: TextStyle(color: Colors.grey.shade600)),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(

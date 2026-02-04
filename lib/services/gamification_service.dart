@@ -31,7 +31,7 @@ class GamificationService {
   // Stream of top users for the leaderboard
   Stream<List<UserModel>> getLeaderboard() {
     return _db
-        .collection('Users')
+        .collection('Complaints')
         .orderBy('points', descending: true)
         .limit(10)
         .snapshots()

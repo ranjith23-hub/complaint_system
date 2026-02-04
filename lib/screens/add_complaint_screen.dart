@@ -118,7 +118,7 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
         'imageUrl': finalImageUrl,
         'latitude': _currentPosition?.latitude,
         'longitude': _currentPosition?.longitude,
-        'status': 'Pending',
+        'status': 'Assigned',
         'createdAt': FieldValue.serverTimestamp(),
         'assignedTo': 'sakthi@gmail.com',
       });

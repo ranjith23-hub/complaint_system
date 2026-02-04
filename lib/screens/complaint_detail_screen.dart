@@ -51,9 +51,9 @@ class ComplaintDetailsPage extends StatelessWidget {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        _statusChip("Submitted", Colors.blue),
+                        _statusChip(complaint.status, Colors.blue),
                         const SizedBox(width: 8),
-                        _statusChip("MEDIUM", Colors.orange), // Assuming static for now
+                        _statusChip(complaint.priority, Colors.orange), // Assuming static for now
                       ],
                     ),
                     const Divider(height: 30),
