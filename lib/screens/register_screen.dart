@@ -30,6 +30,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneController =TextEditingController();
+  // New Controllers
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _aadharController = TextEditingController();
+
+  // State variables for Dropdowns
+  String? _selectedGender;
+  String? _selectedBloodGroup;
+
+  final List<String> _genders = ['Male', 'Female', 'Other'];
+  final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
   bool _loading = false;
 
   // Define colors from your logo for consistent branding
@@ -174,10 +184,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         debugPrint("Background location fetch failed, using previous or null");
       }
 
+      // Add these to the .set() call inside registerUser:
       await FirebaseFirestore.instance.collection('Users').doc(uid).set({
         'name': name,
         'email': email,
         'phone': phone,
+        'dob': _dobController.text, // New
+        'aadhar': _aadharController.text, // New
+        'gender': _selectedGender, // New
+        'bloodGroup': _selectedBloodGroup, // New
         'role': role,
         'url': finalImageUrl,
         'address': _addressController.text.trim(),
@@ -217,10 +232,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+    @override
+    void dispose() {
+      _nameController.dispose();
+      _emailController.dispose();
+      _passwordController.dispose();
+      _phoneController.dispose();
+      _dobController.dispose();
+      _aadharController.dispose();
+      _addressController.dispose();
+      super.dispose();
+    }
   }
 
 
@@ -330,6 +352,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: const Icon(Icons.lock_outline),
                 ),
                 obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              // --- Date of Birth ---
+              TextField(
+                controller: _dobController,
+                readOnly: true, // User must pick from calendar
+                decoration: InputDecoration(
+                  labelText: 'Date of Birth',
+                  border: inputBorder,
+                  focusedBorder: focusedInputBorder,
+                  prefixIcon: const Icon(Icons.calendar_today_outlined),
+                ),
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime(2000),
+                    firstDate: DateTime(1950),
+                    lastDate: DateTime.now(),
+                  );
+                  if (pickedDate != null) {
+                    setState(() {
+                      _dobController.text = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+
+// --- Gender & Blood Group Row ---
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      decoration: InputDecoration(labelText: 'Gender', border: inputBorder),
+                      items: _genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                      onChanged: (v) => setState(() => _selectedGender = v),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedBloodGroup,
+                      decoration: InputDecoration(labelText: 'Blood Group', border: inputBorder),
+                      items: _bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg))).toList(),
+                      onChanged: (v) => setState(() => _selectedBloodGroup = v),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+// --- Aadhar Number ---
+              TextField(
+                controller: _aadharController,
+                decoration: InputDecoration(
+                  labelText: 'Aadhar Number',
+                  border: inputBorder,
+                  focusedBorder: focusedInputBorder,
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                ),
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
 

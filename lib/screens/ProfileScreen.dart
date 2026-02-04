@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:complaint_system/screens/edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -128,21 +129,43 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 25),
 
                       // --- Personal Details ---
+
                       const Text(
                         "Personal Details",
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D47A1)),
                       ),
                       const SizedBox(height: 10),
+
+// Phone and Address (Existing)
                       _buildProfileTile(Icons.phone_outlined, "Phone Number", userData['phone']),
                       _buildProfileTile(Icons.home_outlined, "Home Address", userData['address']),
 
-                      // Show Hard-Fact Coordinates if they exist
+// --- NEW FIELDS ---
+                      _buildProfileTile(Icons.calendar_today_outlined, "Date of Birth", userData['dob']),
+
+// Using Icons.badge_outlined for Aadhar (as discussed previously)
+                      _buildProfileTile(Icons.badge_outlined, "Aadhar Number", userData['aadhar']),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildProfileTile(Icons.person_outline, "Gender", userData['gender']),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildProfileTile(Icons.water_drop_outlined, "Blood Group", userData['bloodGroup']),
+                          ),
+                        ],
+                      ),
+
+// Show Hard-Fact Coordinates if they exist
                       if (userData['latitude'] != null)
                         _buildProfileTile(
                             Icons.gps_fixed,
                             "Registered GPS Location",
                             "Lat: ${userData['latitude'].toStringAsFixed(4)}, Lng: ${userData['longitude'].toStringAsFixed(4)}"
                         ),
+
 
                       const SizedBox(height: 30),
 
@@ -151,7 +174,14 @@ class ProfileScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: ElevatedButton.icon(
-                              onPressed: () {}, // Future Edit Logic
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditProfileScreen(userData: userData),
+                                  ),
+                                );
+                              }, // Future Edit Logic
                               icon: const Icon(Icons.edit, size: 18),
                               label: const Text("Edit Profile"),
                               style: ElevatedButton.styleFrom(
