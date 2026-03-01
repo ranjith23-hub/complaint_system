@@ -6,7 +6,7 @@ import 'package:complaint_system/models/complaint_model.dart';
 import 'package:complaint_system/services/gamification_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:complaint_system/services/email_service.dart';
 class JobDetailScreen extends StatefulWidget {
   final Complaint task;
   const JobDetailScreen({super.key, required this.task});
@@ -228,21 +228,62 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             const SizedBox(height: 20),
 
             ElevatedButton(
-              onPressed: () async {
+                onPressed: () async {
 
-                await _updateFirestoreTask("Resolved",
-                    resolution: _resolutionController.text);
+                  // 1️⃣ Update status to Resolved
+                  await _updateFirestoreTask(
+                    "Resolved",
+                    resolution: _resolutionController.text,
+                  );
 
-                await GamificationService()
-                    .awardPointsForResolution(widget.task.userId);
+                  // 2️⃣ Award points
+                  await GamificationService()
+                      .awardPointsForResolution(widget.task.userId);
 
-                Navigator.pop(context);
-                Navigator.pop(context);
+                  // 3️⃣ Get user email from Firestore
+                  DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                      .collection('Users')
+                      .doc(widget.task.userId)
+                      .get();
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("✅ Complaint resolved & points awarded"))
-                );
-              },
+                  String userEmail = userDoc['email'];
+                  String userName = userDoc['name'];
+
+                  // 4️⃣ Send email
+                  final emailService = EmailService();
+
+                  emailService.sendStatusEmail(
+                    userEmail,
+                    "Your Complaint Has Been Resolved ✅",
+                    """
+                          Hi $userName,
+                          
+                          Good news! 🎉
+                          
+                          Your complaint has been successfully resolved.
+                          
+                          Complaint ID: ${widget.task.complaintId}
+                          Title: ${widget.task.title}
+                          Status: Resolved
+                          
+                          Please open the CivicConnect app and provide your feedback.
+                          
+                          Thank you for being a responsible citizen!
+                          
+                          Regards,
+                          CivicConnect Team
+                          """,
+                  );
+
+                  // 5️⃣ Close screens
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("✅ Complaint resolved, points awarded & email sent"))
+                  );
+                },
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   minimumSize: const Size(double.infinity, 50)),

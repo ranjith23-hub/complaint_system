@@ -9,6 +9,8 @@ import 'package:complaint_system/screens/complaint_detail_screen.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:complaint_system/models/Application.dart';
+import 'package:complaint_system/services/email_service.dart';
+import '../models/Application.dart' as Application;
 //import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
 
@@ -123,7 +125,32 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'assignedTo': 'sakthi@gmail.com',
       });
+      // ✅ SEND EMAIL TO COMPLAINT POSTED USER
 
+      if (user?.email != null) {
+        final emailService = EmailService();
+
+        emailService.sendStatusEmail(
+          user!.email!,
+          "Complaint Submitted Successfully ✅",
+          """
+Hi,
+
+Your complaint has been successfully submitted.
+
+Complaint ID: $customId
+Title: ${_titleController.text.trim()}
+Status: Assigned
+
+You can track the progress inside the CivicConnect app.
+
+Thank you for helping improve your community!
+
+Regards,
+CivicConnect Team
+""",
+        );
+      }
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Complaint Filed Successfully!')));

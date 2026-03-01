@@ -50,7 +50,7 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.11.1
   flutter_typeahead: ^5.2.0
-
+  mailer: ^6.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

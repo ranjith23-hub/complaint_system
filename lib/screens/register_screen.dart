@@ -15,6 +15,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:complaint_system/models/Application.dart';
+import 'package:complaint_system/services/email_service.dart';
+import '../models/Application.dart' as Application;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -201,6 +203,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'longitude': finalLng?? 0.0,
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      // ✅ SEND WELCOME EMAIL AFTER SUCCESSFUL REGISTRATION
+
+      final emailService = EmailService();
+
+      await emailService.sendStatusEmail(
+        email,
+        "Welcome to CivicConnect 🎉",
+        """
+        Hi $name,
+        
+        Your account has been successfully registered in CivicConnect.
+        
+        You can now:
+        • Submit complaints
+        • Track complaint progress
+        • Provide feedback
+        • Earn reward points
+        
+        Thank you for joining us!
+        
+        Regards,
+        CivicConnect Team
+        """,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Registration Successful")),

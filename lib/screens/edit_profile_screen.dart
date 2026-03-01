@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:complaint_system/models/Application.dart';
 
+import '../models/Application.dart' as Application;
+
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
 
