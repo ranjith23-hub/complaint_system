@@ -132,7 +132,7 @@ class _CreateOfficialScreenState extends State<CreateOfficialScreen> {
           .createUserWithEmailAndPassword(email: email, password: _passwordController.text);
 
       if (credential.user?.uid != null) {
-        await FirebaseFirestore.instance.collection('Users').doc(email).set({
+        await FirebaseFirestore.instance.collection('Users').doc(credential.user!.uid).set({
           'uid': credential.user!.uid,
           'name': _nameController.text.trim(),
           'email': email,
@@ -140,7 +140,7 @@ class _CreateOfficialScreenState extends State<CreateOfficialScreen> {
           'dob': _dobController.text.trim(),
           'gender': _selectedGender,
           'bloodGroup': _selectedBloodGroup,
-          'aadhaar': _aadhaarController.text.trim(),
+          'aadhar': _aadhaarController.text.trim(),
           'ward': _wardController.text.trim(),
           'address': _addressController.text.trim(),
           'officialRole': _selectedRole,
