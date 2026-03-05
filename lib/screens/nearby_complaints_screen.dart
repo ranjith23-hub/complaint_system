@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/complaint_model.dart';
 import 'package:complaint_system/screens/complaint_detail_screen.dart';
+import '../services/app_localizations.dart';
 
 class NearbyComplaintsScreen extends StatefulWidget {
   const NearbyComplaintsScreen({super.key});
@@ -78,7 +79,7 @@ class _NearbyComplaintsScreenState extends State<NearbyComplaintsScreen> {
     if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Nearby Complaints")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.translate('nearby_complaints') ?? "Nearby Complaints")),
       body: Column(
         children: [
           Padding(
@@ -153,7 +154,7 @@ class _NearbyComplaintsScreenState extends State<NearbyComplaintsScreen> {
                 padding: EdgeInsets.all(16.0),
                 child: Text("Connect to the internet to see results."),
               ),
-                emptyBuilder: (context) => const Padding(
+              emptyBuilder: (context) => const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text("No locations found."),
               ),

@@ -6,8 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:complaint_system/models/Application.dart';
-
-import '../models/Application.dart' ;
+import '../models/Application.dart' as Application;
+import '../services/app_localizations.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -88,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile"), backgroundColor: const Color(0xFF5B2D91), foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.translate('edit_profile') ?? "Edit Profile"), backgroundColor: const Color(0xFF5B2D91), foregroundColor: Colors.white),
       body: _isUpdating
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -120,17 +120,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
               const SizedBox(height: 30),
-              TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: "Full Name", border: OutlineInputBorder())),
+              TextFormField(controller: _nameController, decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('full_name') ?? "Full Name", border: const OutlineInputBorder())),
               const SizedBox(height: 15),
-              TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: "Phone Number", border: OutlineInputBorder())),
+              TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('phone_number') ?? "Phone Number", border: const OutlineInputBorder())),
               const SizedBox(height: 15),
-              TextFormField(controller: _addressController, maxLines: 2, decoration: const InputDecoration(labelText: "Address", border: OutlineInputBorder())),
+              TextFormField(controller: _addressController, maxLines: 2, decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('address') ?? "Address", border: const OutlineInputBorder())),
               const SizedBox(height: 15),
               DropdownButtonFormField<String>(
                 value: _selectedBloodGroup,
                 items: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((bg) => DropdownMenuItem(value: bg, child: Text(bg))).toList(),
                 onChanged: (v) => setState(() => _selectedBloodGroup = v),
-                decoration: const InputDecoration(labelText: "Blood Group", border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('blood_group') ?? "Blood Group", border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 30),
               SizedBox(
@@ -139,7 +139,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: ElevatedButton(
                   onPressed: _updateProfile,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5B2D91), foregroundColor: Colors.white),
-                  child: const Text("Save Changes"),
+                  child: Text(AppLocalizations.of(context)?.translate('save') ?? "Save Changes"),
                 ),
               ),
             ],

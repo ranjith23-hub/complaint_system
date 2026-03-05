@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:intl/intl.dart';
 import 'feedback_page.dart';
+import 'package:complaint_system/services/app_localizations.dart';
 
 class ComplaintDetailsPage extends StatelessWidget {
   final Complaint complaint;
@@ -14,7 +15,6 @@ class ComplaintDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    // ✅ AUTO ROUTE TO FEEDBACK PAGE
     if ((complaint.status.toLowerCase() == "resolved" ||
         complaint.status.toLowerCase() == "closed") &&
         complaint.rating == null) {
@@ -32,33 +32,39 @@ class ComplaintDetailsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text("Complaint Details"),
+        title: Text(
+          AppLocalizations.of(context)?.translate('complaint_details') ??
+              "Complaint Details",
+        ),
         backgroundColor: primaryPurple,
         foregroundColor: Colors.white,
-        elevation: 0,
       ),
-
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _topBanner(),
-            _trackingTimeline(),
-            _mainCard(),
-            _infoSection("Description", complaint.description, Icons.notes),
+            _topBanner(context),
+            _trackingTimeline(context),
+            _mainCard(context),
+
             _infoSection(
-              "Location",
+              AppLocalizations.of(context)?.translate('description') ??
+                  "Description",
+              complaint.description,
+              Icons.notes,
+            ),
+
+            _infoSection(
+              AppLocalizations.of(context)?.translate('location') ??
+                  "Location",
               "Lat: ${complaint.latitude?.toStringAsFixed(2) ?? '0.0'}, "
                   "Lon: ${complaint.longitude?.toStringAsFixed(2) ?? '0.0'}",
               Icons.location_on,
             ),
 
-            if (complaint.imageUrl != null &&
-                complaint.imageUrl!.isNotEmpty)
+            if (complaint.imageUrl != null && complaint.imageUrl!.isNotEmpty)
               _imageSection(),
 
-            // ✅ SHOW FEEDBACK IF ALREADY GIVEN
-            if (complaint.rating != null)
-              _feedbackSection(),
+            if (complaint.rating != null) _feedbackSection(),
 
             const SizedBox(height: 30),
           ],
@@ -68,20 +74,22 @@ class ComplaintDetailsPage extends StatelessWidget {
   }
 
   // ================= HEADER =================
-  Widget _topBanner() {
+  Widget _topBanner(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
       decoration: const BoxDecoration(
         color: primaryPurple,
-        borderRadius:
-        BorderRadius.vertical(bottom: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Complaint Title",
-              style: TextStyle(color: Colors.white70)),
+          Text(
+            AppLocalizations.of(context)?.translate('title') ??
+                "Complaint Title",
+            style: const TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 6),
           Text(
             complaint.title,
@@ -103,8 +111,8 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
-  // ================= TRACKING TIMELINE =================
-  Widget _trackingTimeline() {
+  // ================= TRACKING =================
+  Widget _trackingTimeline(BuildContext context) {
     List<String> stages = [
       "Submitted",
       "Assigned",
@@ -120,21 +128,14 @@ class ComplaintDetailsPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          )
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Complaint Progress",
-            style:
-            TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)?.translate('track_complaint') ??
+                "Complaint Progress",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 18),
           Column(
@@ -181,7 +182,6 @@ class ComplaintDetailsPage extends StatelessWidget {
         : Colors.grey.shade400;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Column(
           children: [
@@ -189,45 +189,22 @@ class ComplaintDetailsPage extends StatelessWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: isCompleted || isCurrent
-                    ? color
-                    : Colors.white,
+                color: isCompleted || isCurrent ? color : Colors.white,
                 border: Border.all(color: color, width: 2),
                 shape: BoxShape.circle,
               ),
-              child: isCompleted
-                  ? const Icon(Icons.check,
-                  size: 14, color: Colors.white)
-                  : isCurrent
-                  ? const Icon(Icons.radio_button_checked,
-                  size: 14, color: Colors.white)
-                  : null,
             ),
             if (!isLast)
-              Container(
-                width: 2,
-                height: 45,
-                color: isCompleted
-                    ? Colors.green
-                    : Colors.grey.shade300,
-              )
+              Container(width: 2, height: 45, color: Colors.grey.shade300)
           ],
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
+          child: Text(
+            title,
+            style: TextStyle(
                 fontWeight:
-                isCurrent ? FontWeight.bold : FontWeight.w500,
-                color: isCompleted || isCurrent
-                    ? Colors.black87
-                    : Colors.grey,
-              ),
-            ),
+                isCurrent ? FontWeight.bold : FontWeight.normal),
           ),
         ),
       ],
@@ -235,25 +212,26 @@ class ComplaintDetailsPage extends StatelessWidget {
   }
 
   // ================= MAIN CARD =================
-  Widget _mainCard() {
+  Widget _mainCard(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
       child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             children: [
               _detailRow(
-                  Icons.category, "Category", complaint.category),
+                Icons.category,
+                AppLocalizations.of(context)?.translate('category') ??
+                    "Category",
+                complaint.category,
+              ),
               const SizedBox(height: 12),
               _detailRow(
                 Icons.calendar_month,
                 "Submitted On",
-                DateFormat('MMM d, yyyy')
-                    .format(complaint.date),
+                DateFormat('MMM d, yyyy').format(complaint.date),
               ),
             ],
           ),
@@ -262,71 +240,15 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
-  // ================= FEEDBACK SECTION =================
-  Widget _feedbackSection() {
+  // ================= OTHER WIDGETS =================
+  Widget _infoSection(String title, String content, IconData icon) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Card(
-        color: Colors.green.shade50,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18)),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Your Feedback",
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                  "Rating: ${complaint.rating?.toStringAsFixed(1)} ⭐"),
-              const SizedBox(height: 6),
-              Text(complaint.feedback ?? ""),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ================= IMAGE =================
-  Widget _imageSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18)),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Image.network(
-            complaint.imageUrl!,
-            height: 220,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _infoSection(
-      String title, String content, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18)),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
@@ -334,9 +256,7 @@ class ComplaintDetailsPage extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(title,
                       style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight:
-                          FontWeight.bold)),
+                          fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 10),
@@ -348,67 +268,37 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _detailRow(
-      IconData icon, String label, String value) {
+  Widget _detailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, color: Colors.grey[700]),
+        Icon(icon),
         const SizedBox(width: 10),
-        Text(label,
-            style: const TextStyle(color: Colors.grey)),
+        Text(label),
         const Spacer(),
-        Text(value,
-            style: const TextStyle(
-                fontWeight: FontWeight.w600)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
 
-  Widget _statusChip(String status) {
-    Color color;
-    switch (status.toLowerCase()) {
-      case 'resolved':
-      case 'closed':
-        color = Colors.green;
-        break;
-      case 'pending':
-        color = Colors.orange;
-        break;
-      case 'in progress':
-        color = Colors.blue;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Container(
-      padding:
-      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(status,
-          style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12)),
+  Widget _imageSection() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Image.network(complaint.imageUrl!),
     );
   }
 
-  Widget _priorityChip(String priority) {
-    return Container(
-      padding:
-      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(priority,
-          style: const TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-              fontSize: 12)),
+  Widget _feedbackSection() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text("Rating: ${complaint.rating} ⭐"),
     );
+  }
+
+  Widget _statusChip(String status) {
+    return Chip(label: Text(status));
+  }
+
+  Widget _priorityChip(String priority) {
+    return Chip(label: Text(priority));
   }
 }

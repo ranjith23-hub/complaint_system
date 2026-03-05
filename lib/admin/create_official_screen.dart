@@ -9,6 +9,8 @@ import 'package:geolocator/geolocator.dart'; // New
 import 'package:geocoding/geocoding.dart';
 import 'package:complaint_system/models/Application.dart' ;
 
+import '../models/Application.dart' as Application;
+
 
 
 class CreateOfficialScreen extends StatefulWidget {

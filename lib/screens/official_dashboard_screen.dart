@@ -10,6 +10,7 @@ import 'package:complaint_system/screens/JobDetailsScreen.dart';
 import 'package:complaint_system/screens/ProfileScreen.dart';
 import 'package:complaint_system/screens/leaderboard_screen.dart';
 import 'package:complaint_system/screens/analytics_dashboard_screen.dart';
+import '../services/app_localizations.dart';
 
 class OfficialDashboardScreen extends StatefulWidget {
   const OfficialDashboardScreen({super.key});
@@ -145,8 +146,8 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Welcome",
-                        style: TextStyle(color: Colors.white70)),
+                    Text(AppLocalizations.of(context)?.translate('welcome') ?? "Welcome",
+                        style: const TextStyle(color: Colors.white70)),
                     const SizedBox(height: 2),
                     Text(
                       user.email ?? "",
@@ -185,7 +186,7 @@ class _OfficialDashboardScreenState extends State<OfficialDashboardScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("No complaints assigned"));
+          return Center(child: Text(AppLocalizations.of(context)?.translate('no_complaints') ?? "No complaints assigned"));
         }
 
         final docs = snapshot.data!.docs;

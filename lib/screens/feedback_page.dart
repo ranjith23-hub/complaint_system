@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:complaint_system/models/complaint_model.dart';
+import '../services/app_localizations.dart';
 
 class FeedbackPage extends StatefulWidget {
   final Complaint complaint;
@@ -69,7 +70,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Give Feedback")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.translate('give_feedback') ?? "Give Feedback")),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -117,7 +118,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
               onPressed: selectedPoints == 0
                   ? null
                   : submitFeedback,
-              child: const Text("Submit"),
+              child: Text(AppLocalizations.of(context)?.translate('submit') ?? "Submit"),
             ),
           ],
         ),

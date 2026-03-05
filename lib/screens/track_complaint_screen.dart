@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:complaint_system/models/complaint_model.dart';
 import 'package:complaint_system/screens/complaint_detail_screen.dart';
+import '../services/app_localizations.dart';
 
 class TrackComplaintScreen extends StatefulWidget {
   const TrackComplaintScreen({super.key});
@@ -65,7 +66,7 @@ class _TrackComplaintScreenState extends State<TrackComplaintScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Track Complaint Status"),
+        title: Text(AppLocalizations.of(context)?.translate('track_complaint') ?? "Track Complaint Status"),
         backgroundColor: const Color(0xFF0D47A1),
         foregroundColor: Colors.white,
       ),
@@ -74,9 +75,9 @@ class _TrackComplaintScreenState extends State<TrackComplaintScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Enter Complaint ID",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)?.translate('track_complaint') ?? "Enter Complaint ID",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -108,9 +109,9 @@ class _TrackComplaintScreenState extends State<TrackComplaintScreen> {
                 ),
                 child: _isSearching
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  "Track Status",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+                    : Text(
+                  AppLocalizations.of(context)?.translate('track') ?? "Track Status",
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
             ),
