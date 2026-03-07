@@ -1,10 +1,8 @@
-import 'package:complaint_system/screens/login_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/register_screen.dart';
 import 'Auth_Wrapper.dart';
+import 'ae_dashboard/ae_login_screen.dart';
 
 void main()  async  {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,7 +77,7 @@ class _AnimatedLandingState extends State<AnimatedLanding>
     final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SlideTransition(
@@ -94,7 +92,7 @@ class _AnimatedLandingState extends State<AnimatedLanding>
                     Image.asset(
                       'assets/images/img.png',
                       height: 180,
-                      errorBuilder: (_, __, ___) => Icon(
+                      errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.location_city,
                         size: 120,
                         color: primary,
@@ -133,12 +131,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Civic Complaint Management System',
+      routes: {
+        '/admin-login': (_) => const AeLoginScreen(),
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4A148C),
           primary: const Color(0xFF4A148C),
           secondary: const Color(0xFFF50057),
-          background: const Color(0xFFF5F5F5),
+          surface: const Color(0xFFF5F5F5),
         ),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
