@@ -8,6 +8,7 @@ import 'package:complaint_system/screens/add_complaint_screen.dart';
 import 'package:complaint_system/complaint_card.dart';
 import 'package:complaint_system/screens/login_screen.dart';
 import 'package:complaint_system/screens/ProfileScreen.dart';
+import '../services/app_localizations.dart';
 
 class CitizenDashboardScreen extends StatefulWidget {
   const CitizenDashboardScreen({super.key});
@@ -64,7 +65,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
 
       // ================= APPBAR =================
       appBar: AppBar(
-        title: const Text('My Complaints'),
+        title: Text(AppLocalizations.of(context)?.translate('my_complaints') ?? "My Complaints"),
         backgroundColor: primaryPurple,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -83,10 +84,10 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
               }
             },
             itemBuilder: (context) => [
-              _menuItem(Icons.person, "My Profile", "profile"),
-              _menuItem(Icons.search, "Find Complaint", "find"),
-              _menuItem(Icons.track_changes, "Track Complaint", "track"),
-              _menuItem(Icons.help_outline, "Help", "help"),
+              _menuItem(Icons.person, AppLocalizations.of(context)?.translate('my_profile') ?? "My Profile", "profile"),
+              _menuItem(Icons.search, AppLocalizations.of(context)?.translate('find_complaint') ?? "Find Complaint", "find"),
+              _menuItem(Icons.track_changes, AppLocalizations.of(context)?.translate('track_complaint') ?? "Track Complaint", "track"),
+              _menuItem(Icons.help_outline, AppLocalizations.of(context)?.translate('help') ?? "Help", "help"),
             ],
           ),
           IconButton(
@@ -120,7 +121,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
         },
         backgroundColor: const Color(0xFF0D47A1),
         icon: const Icon(Icons.add),
-        label: const Text('New Complaint'),
+        label: Text(AppLocalizations.of(context)?.translate('new_complaint') ?? "New Complaint"),
       ),
     );
   }
@@ -138,11 +139,11 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Welcome",
+            AppLocalizations.of(context)?.translate('welcome') ?? "Welcome",
             style: TextStyle(color: Colors.white.withOpacity(0.8)),
           ),
           const SizedBox(height: 6),
-  StreamBuilder<DocumentSnapshot>(
+          StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('Users').doc(currentUser?.uid).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
@@ -185,14 +186,20 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inbox_outlined, size: 80, color: Colors.grey),
-                SizedBox(height: 12),
-                Text("No complaints yet", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                Text("Tap + to submit a complaint", style: TextStyle(color: Colors.grey)),
+                const Icon(Icons.inbox_outlined, size: 80, color: Colors.grey),
+                const SizedBox(height: 12),
+                Text(
+                  AppLocalizations.of(context)?.translate('no_complaints') ?? "No complaints yet",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text("Tap + to submit a complaint", style: TextStyle(color: Colors.grey)),
               ],
             ),
           );

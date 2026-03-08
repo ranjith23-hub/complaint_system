@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:complaint_system/screens/edit_profile_screen.dart';
+import 'package:provider/provider.dart';
+import '../services/language_provider.dart';
+import '../services/app_localizations.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -43,8 +46,8 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('My Profile'),
-        backgroundColor:   const Color(0xFF5B2D91), // Civic Blue
+        title: Text(AppLocalizations.of(context)?.translate('profile') ?? 'My Profile'),
+        backgroundColor: const Color(0xFF5B2D91), // Civic Blue
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -167,6 +170,46 @@ class ProfileScreen extends StatelessWidget {
                         ),
 
 
+                      const SizedBox(height: 30),
+
+                      // --- Language Toggle Section ---
+                      Text(
+                        AppLocalizations.of(context)?.translate('language') ?? "Language",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D47A1)),
+                      ),
+                      const SizedBox(height: 10),
+                      Consumer<LanguageProvider>(
+                        builder: (context, languageProvider, child) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<Locale>(
+                                  title: Text(AppLocalizations.of(context)?.translate('english') ?? 'English'),
+                                  value: const Locale('en'),
+                                  groupValue: languageProvider.appLocale,
+                                  onChanged: (Locale? value) {
+                                    if (value != null) {
+                                      languageProvider.changeLanguage(value);
+                                    }
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                child: RadioListTile<Locale>(
+                                  title: Text(AppLocalizations.of(context)?.translate('tamil') ?? 'Tamil'),
+                                  value: const Locale('ta'),
+                                  groupValue: languageProvider.appLocale,
+                                  onChanged: (Locale? value) {
+                                    if (value != null) {
+                                      languageProvider.changeLanguage(value);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                       const SizedBox(height: 30),
 
                       // --- Action Buttons ---

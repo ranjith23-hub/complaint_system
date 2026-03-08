@@ -15,6 +15,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:complaint_system/services/email_service.dart';
+import '../models/Application.dart' as Application;
+import '../services/app_localizations.dart';
 
 import '../models/Application.dart' as Application;
 
@@ -258,17 +260,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-    @override
-    void dispose() {
-      _nameController.dispose();
-      _emailController.dispose();
-      _passwordController.dispose();
-      _phoneController.dispose();
-      _dobController.dispose();
-      _aadharController.dispose();
-      _addressController.dispose();
-      super.dispose();
-    }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _phoneController.dispose();
+    _dobController.dispose();
+    _aadharController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
 
 
 
@@ -333,7 +335,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _nameController, // <-- BUG FIX: Added controller
                 decoration: InputDecoration(
-                  labelText: 'Full Name',
+                  labelText: AppLocalizations.of(context)?.translate('full_name') ?? 'Full Name',
                   border: inputBorder,
                   focusedBorder: focusedInputBorder,
                   prefixIcon: const Icon(Icons.person_outline),
@@ -345,7 +347,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _emailController, // <-- BUG FIX: Added controller
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: AppLocalizations.of(context)?.translate('email') ?? 'Email',
                   border: inputBorder,
                   focusedBorder: focusedInputBorder,
                   prefixIcon: const Icon(Icons.email_outlined),
@@ -360,7 +362,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _passwordController, // <-- BUG FIX: Added controller
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: AppLocalizations.of(context)?.translate('password') ?? 'Password',
                   border: inputBorder,
                   focusedBorder: focusedInputBorder,
                   prefixIcon: const Icon(Icons.lock_outline),
@@ -369,10 +371,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 20),
               // ---Phone NO-------
-          TextField(
+              TextField(
                 controller: _phoneController, // <-- BUG FIX: Added controller
                 decoration: InputDecoration(
-                  labelText: 'Phone No',
+                  labelText: AppLocalizations.of(context)?.translate('phone_number') ?? 'Phone No',
                   border: inputBorder,
                   focusedBorder: focusedInputBorder,
                   prefixIcon: const Icon(Icons.lock_outline),
@@ -385,7 +387,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _dobController,
                 readOnly: true, // User must pick from calendar
                 decoration: InputDecoration(
-                  labelText: 'Date of Birth',
+                  labelText: AppLocalizations.of(context)?.translate('date_of_birth') ?? 'Date of Birth',
                   border: inputBorder,
                   focusedBorder: focusedInputBorder,
                   prefixIcon: const Icon(Icons.calendar_today_outlined),
@@ -412,7 +414,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedGender,
-                      decoration: InputDecoration(labelText: 'Gender', border: inputBorder),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('gender') ?? 'Gender', border: inputBorder),
                       items: _genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                       onChanged: (v) => setState(() => _selectedGender = v),
                     ),
@@ -421,7 +423,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedBloodGroup,
-                      decoration: InputDecoration(labelText: 'Blood Group', border: inputBorder),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('blood_group') ?? 'Blood Group', border: inputBorder),
                       items: _bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg))).toList(),
                       onChanged: (v) => setState(() => _selectedBloodGroup = v),
                     ),
@@ -489,7 +491,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _addressController,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: "Home Address",
+                  labelText: AppLocalizations.of(context)?.translate('address') ?? "Home Address",
                   hintText: "Enter your address or tap the icon",
                   prefixIcon: const Icon(Icons.home_outlined),
                   border:inputBorder,
@@ -512,7 +514,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               DropdownButtonFormField<String>(
                 value: _selectedRole,
                 decoration: InputDecoration(
-                  labelText: 'Select your role',
+                  labelText: AppLocalizations.of(context)?.translate('role') ?? 'Select your role',
                   border: inputBorder,
                   focusedBorder: focusedInputBorder,
                   prefixIcon: const Icon(Icons.group_outlined),
@@ -533,8 +535,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed:_loading
-                    ? null
-                    : () async {
+                      ? null
+                      : () async {
                     setState(() => _loading = true);
 
                     await registerUser(
@@ -549,7 +551,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     if (mounted) setState(() => _loading = false);
 
-                    },
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5B2D91),
                     foregroundColor: Colors.white,
@@ -559,9 +561,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: _loading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                    'Register',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      : Text(
+                    AppLocalizations.of(context)?.translate('register') ?? 'Register',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -585,9 +587,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Already have an account? Login',
-                    style: TextStyle(fontSize: 16),
+                  child: Text(
+                    AppLocalizations.of(context)?.translate('have_account') ?? 'Already have an account? Login',
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),

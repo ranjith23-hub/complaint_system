@@ -1,16 +1,70 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'firebase_options.dart';
 import 'Auth_Wrapper.dart';
-import 'ae_dashboard/ae_login_screen.dart';
+import 'services/app_localizations.dart';
+import 'services/language_provider.dart';
 
-void main()  async  {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<LanguageProvider>(
+      builder: (context, languageProvider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: "Civic Connect",
+
+          locale: languageProvider.appLocale,
+
+          supportedLocales: const [
+            Locale('en'),
+            Locale('ta'),
+          ],
+
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF4A148C),
+            ),
+          ),
+
+          home: const AnimatedLanding(),
+        );
+      },
+    );
+  }
+}
+
 class AnimatedLanding extends StatefulWidget {
   const AnimatedLanding({super.key});
 
@@ -50,10 +104,8 @@ class _AnimatedLandingState extends State<AnimatedLanding>
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
 
-    // ▶ Start animation
     _controller.forward();
 
-    // ⏳ Auto-navigate after 5 seconds
     Future.delayed(const Duration(seconds: 5), () {
       if (!mounted) return;
 
@@ -74,109 +126,92 @@ class _AnimatedLandingState extends State<AnimatedLanding>
 
   @override
   Widget build(BuildContext context) {
+
     final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SlideTransition(
-            position: _slide,
-            child: FadeTransition(
-              opacity: _fade,
-              child: ScaleTransition(
-                scale: _scale,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/img.png',
-                      height: 180,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.location_city,
-                        size: 120,
-                        color: primary,
-                      ),
+        child: Column(
+          children: [
+
+            /// 🌍 LANGUAGE DROPDOWN
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: DropdownButton<String>(
+                  value: context.watch<LanguageProvider>().appLocale?.languageCode,
+                  items: const [
+                    DropdownMenuItem(
+                      value: "en",
+                      child: Text("English"),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      "Civic Connect",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: primary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Empowering citizens to build better cities",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
+                    DropdownMenuItem(
+                      value: "ta",
+                      child: Text("தமிழ்"),
                     ),
                   ],
+                  onChanged: (value) {
+                    context.read<LanguageProvider>().changeLanguage(
+                      Locale(value!),
+                    );
+                  },
                 ),
               ),
             ),
-          ),
+
+            Expanded(
+              child: Center(
+                child: SlideTransition(
+                  position: _slide,
+                  child: FadeTransition(
+                    opacity: _fade,
+                    child: ScaleTransition(
+                      scale: _scale,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+
+                          Image.asset(
+                            'assets/images/img.png',
+                            height: 180,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.location_city,
+                              size: 120,
+                              color: primary,
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          Text(
+                            "Civic Connect",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: primary,
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          const Text(
+                            "Empowering citizens to build better cities",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Civic Complaint Management System',
-      routes: {
-        '/admin-login': (_) => const AeLoginScreen(),
-      },
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4A148C),
-          primary: const Color(0xFF4A148C),
-          secondary: const Color(0xFFF50057),
-          surface: const Color(0xFFF5F5F5),
-        ),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF4A148C),
-          foregroundColor: Colors.white,
-          elevation: 4,
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF4A148C),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          filled: true,
-          fillColor: Colors.white70,
-        ),
-      ),
-      debugShowCheckedModeBanner: false,
-      home: const AnimatedLanding(),
-    );
-  }
-}

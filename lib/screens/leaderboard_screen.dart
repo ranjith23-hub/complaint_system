@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/gamification_service.dart';
 import '../models/user_model.dart';
+import '../services/app_localizations.dart';
 
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
@@ -12,7 +13,7 @@ class LeaderboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Civic Leaderboard"),
+        title: Text(AppLocalizations.of(context)?.translate('leaderboard') ?? "Civic Leaderboard"),
         backgroundColor: primaryColor,
         centerTitle: true,
       ),
@@ -70,14 +71,14 @@ class LeaderboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 color: primaryColor.withOpacity(0.1),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.emoji_events, color: Colors.amber, size: 40),
                     SizedBox(width: 10),
                     Text(
-                      "Top Contributors",
-                      style: TextStyle(
+                      AppLocalizations.of(context)?.translate('top_contributors') ?? "Top Contributors",
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),

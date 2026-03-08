@@ -7,6 +7,7 @@ import 'package:complaint_system/services/gamification_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:complaint_system/services/email_service.dart';
+import '../services/app_localizations.dart';
 class JobDetailScreen extends StatefulWidget {
   final Complaint task;
   const JobDetailScreen({super.key, required this.task});
@@ -228,34 +229,34 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             const SizedBox(height: 20),
 
             ElevatedButton(
-                onPressed: () async {
+              onPressed: () async {
 
-                  // 1️⃣ Update status to Resolved
-                  await _updateFirestoreTask(
-                    "Resolved",
-                    resolution: _resolutionController.text,
-                  );
+                // 1️⃣ Update status to Resolved
+                await _updateFirestoreTask(
+                  "Resolved",
+                  resolution: _resolutionController.text,
+                );
 
-                  // 2️⃣ Award points
-                  await GamificationService()
-                      .awardPointsForResolution(widget.task.userId);
+                // 2️⃣ Award points
+                await GamificationService()
+                    .awardPointsForResolution(widget.task.userId);
 
-                  // 3️⃣ Get user email from Firestore
-                  DocumentSnapshot userDoc = await FirebaseFirestore.instance
-                      .collection('Users')
-                      .doc(widget.task.userId)
-                      .get();
+                // 3️⃣ Get user email from Firestore
+                DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                    .collection('Users')
+                    .doc(widget.task.userId)
+                    .get();
 
-                  String userEmail = userDoc['email'];
-                  String userName = userDoc['name'];
+                String userEmail = userDoc['email'];
+                String userName = userDoc['name'];
 
-                  // 4️⃣ Send email
-                  final emailService = EmailService();
+                // 4️⃣ Send email
+                final emailService = EmailService();
 
-                  emailService.sendStatusEmail(
-                    userEmail,
-                    "Your Complaint Has Been Resolved ✅",
-                    """
+                emailService.sendStatusEmail(
+                  userEmail,
+                  "Your Complaint Has Been Resolved ✅",
+                  """
                           Hi $userName,
                           
                           Good news! 🎉
@@ -273,17 +274,17 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                           Regards,
                           CivicConnect Team
                           """,
-                  );
+                );
 
-                  // 5️⃣ Close screens
-                  Navigator.pop(context);
-                  Navigator.pop(context);
+                // 5️⃣ Close screens
+                Navigator.pop(context);
+                Navigator.pop(context);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("✅ Complaint resolved, points awarded & email sent"))
-                  );
-                },
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("✅ Complaint resolved, points awarded & email sent"))
+                );
+              },
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   minimumSize: const Size(double.infinity, 50)),
@@ -301,7 +302,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
-        title: const Text("Execution Details"),
+        title: Text(AppLocalizations.of(context)?.translate('execution_details') ?? "Execution Details"),
         backgroundColor: primaryPurple,
         foregroundColor: Colors.white,
       ),
@@ -317,15 +318,15 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             _trackingTimeline(),
             const SizedBox(height:20),
 
-            const Text("Issue Description",
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)?.translate('description') ?? "Issue Description",
+                style: const TextStyle(fontWeight: FontWeight.bold)),
 
             _card(Text(widget.task.description)),
 
             const SizedBox(height:20),
 
-            const Text("Location",
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)?.translate('location') ?? "Location",
+                style: const TextStyle(fontWeight: FontWeight.bold)),
 
             _card(Row(
               children: [

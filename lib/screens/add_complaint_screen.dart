@@ -12,6 +12,7 @@ import 'package:complaint_system/models/Application.dart';
 import 'package:complaint_system/services/email_service.dart';
 import '../models/Application.dart' ;
 import '../models/Application.dart' as Application;
+import '../services/app_localizations.dart';
 //import 'package:firebase_storage/firebase_storage.dart'; // Add this for images
 
 
@@ -166,7 +167,7 @@ CivicConnect Team
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Complaint')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.translate('new_complaint') ?? 'New Complaint')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -175,14 +176,14 @@ CivicConnect Team
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Issue Title', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('title') ?? 'Issue Title', border: const OutlineInputBorder()),
                 validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descController,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)?.translate('description') ?? 'Description', border: const OutlineInputBorder()),
                 validator: (v) => v!.isEmpty ? 'Please describe the issue' : null,
               ),
 
@@ -203,7 +204,7 @@ CivicConnect Team
               TextButton.icon(
                   onPressed: _pickImage,
                   icon: const Icon(Icons.add_a_photo),
-                  label: const Text("Select Photo")
+                  label: Text(AppLocalizations.of(context)?.translate('upload_image') ?? "Select Photo")
               ),
 
               const Divider(height: 30),
@@ -236,7 +237,7 @@ CivicConnect Team
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
                   ),
                   onPressed: _submitComplaint,
-                  child: const Text("SUBMIT COMPLAINT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                  child: Text(AppLocalizations.of(context)?.translate('submit_complaint') ?? "SUBMIT COMPLAINT", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
               ),
             ],
           ),

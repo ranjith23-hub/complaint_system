@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../services/app_localizations.dart';
 
 class AnalyticsDashboardScreen extends StatelessWidget {
   const AnalyticsDashboardScreen({super.key});
@@ -130,7 +131,7 @@ class AnalyticsDashboardScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: bgColor,
           appBar: AppBar(
-            title: const Text("City Analytics"),
+            title: Text(AppLocalizations.of(context)?.translate('analytics') ?? "City Analytics"),
             backgroundColor: primaryPurple,
             foregroundColor: Colors.white,
             actions: [
@@ -169,7 +170,7 @@ class AnalyticsDashboardScreen extends StatelessWidget {
 
                 // ===== BAR CHART =====
                 _sectionCard(
-                  title: "Complaints by Category",
+                  title: AppLocalizations.of(context)?.translate('category') ?? "Complaints by Category",
                   child: SizedBox(
                     height: 260,
                     child: _buildBarChart(categoryCounts),
