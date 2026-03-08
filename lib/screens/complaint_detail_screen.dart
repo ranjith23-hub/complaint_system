@@ -16,7 +16,8 @@ class ComplaintDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
 
     if ((complaint.status.toLowerCase() == "resolved" ||
-        complaint.status.toLowerCase() == "closed") &&
+        complaint.status.toLowerCase() == "closed" ||
+        complaint.status.toLowerCase() == "task_completed") &&
         complaint.rating == null) {
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,6 +75,7 @@ class ComplaintDetailsPage extends StatelessWidget {
   }
 
   // ================= HEADER =================
+
   Widget _topBanner(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -85,12 +87,15 @@ class ComplaintDetailsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
           Text(
             AppLocalizations.of(context)?.translate('title') ??
                 "Complaint Title",
             style: const TextStyle(color: Colors.white70),
           ),
+
           const SizedBox(height: 6),
+
           Text(
             complaint.title,
             style: const TextStyle(
@@ -98,7 +103,9 @@ class ComplaintDetailsPage extends StatelessWidget {
                 fontSize: 20,
                 fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 12),
+
           Row(
             children: [
               _statusChip(complaint.status),
@@ -112,7 +119,9 @@ class ComplaintDetailsPage extends StatelessWidget {
   }
 
   // ================= TRACKING =================
+
   Widget _trackingTimeline(BuildContext context) {
+
     List<String> stages = [
       "Submitted",
       "Assigned",
@@ -132,12 +141,15 @@ class ComplaintDetailsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
           Text(
             AppLocalizations.of(context)?.translate('track_complaint') ??
                 "Complaint Progress",
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 18),
+
           Column(
             children: List.generate(stages.length, (index) {
               return _timelineTile(
@@ -154,19 +166,18 @@ class ComplaintDetailsPage extends StatelessWidget {
   }
 
   int _currentStepIndex(String status) {
-    switch (status.toLowerCase()) {
-      case "submitted":
-        return 0;
-      case "assigned":
-        return 1;
-      case "in progress":
-        return 2;
-      case "resolved":
-      case "closed":
-        return 3;
-      default:
-        return 0;
-    }
+
+    String normalized = status.toLowerCase();
+
+    if (normalized.contains("submitted")) return 0;
+    if (normalized.contains("assigned")) return 1;
+    if (normalized.contains("progress")) return 2;
+
+    if (normalized.contains("resolved") ||
+        normalized.contains("closed") ||
+        normalized.contains("completed")) return 3;
+
+    return 0;
   }
 
   Widget _timelineTile({
@@ -175,6 +186,7 @@ class ComplaintDetailsPage extends StatelessWidget {
     required bool isCurrent,
     required bool isLast,
   }) {
+
     Color color = isCompleted
         ? Colors.green
         : isCurrent
@@ -185,6 +197,7 @@ class ComplaintDetailsPage extends StatelessWidget {
       children: [
         Column(
           children: [
+
             Container(
               width: 22,
               height: 22,
@@ -194,11 +207,14 @@ class ComplaintDetailsPage extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
+
             if (!isLast)
               Container(width: 2, height: 45, color: Colors.grey.shade300)
           ],
         ),
+
         const SizedBox(width: 12),
+
         Expanded(
           child: Text(
             title,
@@ -212,7 +228,9 @@ class ComplaintDetailsPage extends StatelessWidget {
   }
 
   // ================= MAIN CARD =================
+
   Widget _mainCard(BuildContext context) {
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
       child: Card(
@@ -221,13 +239,16 @@ class ComplaintDetailsPage extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           child: Column(
             children: [
+
               _detailRow(
                 Icons.category,
                 AppLocalizations.of(context)?.translate('category') ??
                     "Category",
                 complaint.category,
               ),
+
               const SizedBox(height: 12),
+
               _detailRow(
                 Icons.calendar_month,
                 "Submitted On",
@@ -240,8 +261,10 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
-  // ================= OTHER WIDGETS =================
+  // ================= INFO SECTION =================
+
   Widget _infoSection(String title, String content, IconData icon) {
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Card(
@@ -250,6 +273,7 @@ class ComplaintDetailsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               Row(
                 children: [
                   Icon(icon, color: primaryPurple),
@@ -259,7 +283,9 @@ class ComplaintDetailsPage extends StatelessWidget {
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
+
               const SizedBox(height: 10),
+
               Text(content),
             ],
           ),
@@ -268,17 +294,27 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
+  // ================= DETAIL ROW =================
+
   Widget _detailRow(IconData icon, String label, String value) {
+
     return Row(
       children: [
+
         Icon(icon),
+
         const SizedBox(width: 10),
+
         Text(label),
+
         const Spacer(),
+
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
+
+  // ================= IMAGE =================
 
   Widget _imageSection() {
     return Padding(
@@ -287,6 +323,8 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
+  // ================= FEEDBACK =================
+
   Widget _feedbackSection() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -294,11 +332,91 @@ class ComplaintDetailsPage extends StatelessWidget {
     );
   }
 
+  // ================= STATUS CHIP =================
+
   Widget _statusChip(String status) {
-    return Chip(label: Text(status));
+
+    String formatted = formatStatus(status);
+
+    String normalized = status.toLowerCase();
+
+    Color chipColor;
+
+    if (normalized.contains("submitted")) {
+      chipColor = Colors.blue;
+    }
+    else if (normalized.contains("assigned")) {
+      chipColor = Colors.orange;
+    }
+    else if (normalized.contains("progress")) {
+      chipColor = Colors.purple;
+    }
+    else if (normalized.contains("resolved") ||
+        normalized.contains("completed") ||
+        normalized.contains("closed")) {
+      chipColor = Colors.green;
+    }
+    else {
+      chipColor = Colors.grey;
+    }
+
+    return Chip(
+      label: Text(
+        formatted,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: chipColor,
+    );
   }
 
+  // ================= PRIORITY CHIP =================
+
   Widget _priorityChip(String priority) {
-    return Chip(label: Text(priority));
+
+    Color chipColor;
+
+    switch (priority.toLowerCase()) {
+
+      case "high":
+        chipColor = Colors.red;
+        break;
+
+      case "medium":
+        chipColor = Colors.orange;
+        break;
+
+      case "low":
+        chipColor = Colors.green;
+        break;
+
+      default:
+        chipColor = Colors.grey;
+    }
+
+    return Chip(
+      label: Text(
+        priority.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: chipColor,
+    );
+  }
+
+  // ================= STATUS FORMAT =================
+
+  String formatStatus(String status) {
+
+    return status
+        .replaceAll("_", " ")
+        .split(" ")
+        .map((word) =>
+    word[0].toUpperCase() + word.substring(1))
+        .join(" ");
   }
 }
