@@ -16,6 +16,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:complaint_system/services/email_service.dart';
 
+import '../models/Application.dart' as Application;
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
